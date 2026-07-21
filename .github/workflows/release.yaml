@@ -26,8 +26,83 @@ jobs:
         uses: azure/setup-helm@v5
 
       - name: Run chart-releaser
+        id: release
         uses: helm/chart-releaser-action@v1.7.0
         with:
           charts_dir: .
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Collect chart versions from master
+        if: steps.release.outputs.changed_charts != ''
+        id: versions
+        run: |
+          # Build a JSON map { "chart_name": {"version": "x", "app_version": "y"} }
+          # while we're still on the master checkout (Chart.yaml files are present)
+          python3 - <<'EOF'
+          import re, json, os
+
+          charts_raw = os.environ["CHANGED_CHARTS"]
+          result = {}
+          for chart_dir in charts_raw.split():
+              chart_name = chart_dir.rstrip("/").split("/")[-1]
+              chart_yaml_path = f"{chart_dir}/Chart.yaml"
+              if not os.path.exists(chart_yaml_path):
+                  print(f"Warning: {chart_yaml_path} not found, skipping")
+                  continue
+              with open(chart_yaml_path) as f:
+                  cy = f.read()
+              version = re.search(r"^version:\s*(.+)$", cy, re.M).group(1).strip()
+              app_version = re.search(r'^appVersion:\s*["\']?(.+?)["\']?\s*$', cy, re.M).group(1).strip()
+              result[chart_name] = {"version": version, "app_version": app_version}
+              print(f"Collected {chart_name}: {version} / {app_version}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"versions_json={json.dumps(result)}\n")
+          EOF
+        env:
+          CHANGED_CHARTS: ${{ steps.release.outputs.changed_charts }}
+
+      - name: Update landing page versions
+        if: steps.release.outputs.changed_charts != ''
+        run: |
+          git fetch origin gh-pages
+          git checkout gh-pages
+
+          python3 - <<'EOF'
+          import re, json, os
+
+          versions = json.loads(os.environ["VERSIONS_JSON"])
+
+          with open("index.md") as f:
+              content = f.read()
+
+          for chart_name, info in versions.items():
+              version = info["version"]
+              app_version = info["app_version"]
+              # Matches: | [chart_name](any_url) | any description | OLD_VER | OLD_APP_VER |
+              pattern = rf'(\|\s*\[{re.escape(chart_name)}\]\([^)]+\)\s*\|[^|]+\|)[^|]+(\|)[^|]+(\|)'
+              replacement = rf'\g<1> {version} \g<2> {app_version} \g<3>'
+              new_content, n = re.subn(pattern, replacement, content)
+              if n:
+                  print(f"Updated {chart_name}: {version} / {app_version}")
+                  content = new_content
+              else:
+                  print(f"Warning: no table row found for {chart_name}")
+
+          with open("index.md", "w") as f:
+              f.write(content)
+          EOF
+
+          if git diff --quiet; then
+            echo "No changes to index.md"
+            exit 0
+          fi
+
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git add index.md
+          git commit -m "docs: update chart versions in landing page"
+          git push origin gh-pages
+        env:
+          VERSIONS_JSON: ${{ steps.versions.outputs.versions_json }}
