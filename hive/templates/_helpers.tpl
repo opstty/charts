@@ -172,3 +172,55 @@ Usage: {{ include "hive.hiveSiteXml" (dict "default" .Values.hiveSite.properties
 {{- end }}
 </configuration>
 {{- end }}
+
+{{/*
+PostgreSQL connection helpers — resolve embedded (subchart) vs external DB.
+*/}}
+
+{{- define "hive.pgHost" -}}
+{{- if .Values.metastore.database.enabled -}}
+{{- printf "%s-postgresql.%s.svc.cluster.local" .Release.Name .Release.Namespace -}}
+{{- else -}}
+{{- .Values.metastore.database.external.host -}}
+{{- end -}}
+{{- end }}
+
+{{- define "hive.pgPort" -}}
+{{- if .Values.metastore.database.enabled -}}
+5432
+{{- else -}}
+{{- .Values.metastore.database.external.port | toString -}}
+{{- end -}}
+{{- end }}
+
+{{- define "hive.pgUser" -}}
+{{- if .Values.metastore.database.enabled -}}
+{{- .Values.postgresql.auth.username | default "hive" -}}
+{{- else -}}
+{{- .Values.metastore.database.external.user -}}
+{{- end -}}
+{{- end }}
+
+{{- define "hive.pgDatabase" -}}
+{{- if .Values.metastore.database.enabled -}}
+{{- .Values.postgresql.auth.database | default "metastore" -}}
+{{- else -}}
+{{- .Values.metastore.database.external.name -}}
+{{- end -}}
+{{- end }}
+
+{{- define "hive.pgSecretName" -}}
+{{- if .Values.metastore.database.enabled -}}
+{{- .Values.postgresql.auth.existingSecret | default (printf "%s-postgresql" .Release.Name) -}}
+{{- else -}}
+{{- .Values.metastore.database.external.existingSecret -}}
+{{- end -}}
+{{- end }}
+
+{{- define "hive.pgSecretPasswordKey" -}}
+{{- if .Values.metastore.database.enabled -}}
+password
+{{- else -}}
+{{- .Values.metastore.database.external.existingSecretPasswordKey -}}
+{{- end -}}
+{{- end }}

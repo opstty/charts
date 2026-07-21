@@ -169,8 +169,8 @@ metastore:
     #   hosts:
     #     - hive-metastore.example.com
 
-  # -- Embedded PostgreSQL database via Percona Everest DatabaseCluster CRD.
-  # Set enabled: false to manage the database externally.
+  # -- Embedded PostgreSQL database via Bitnami postgresql subchart.
+  # Set enabled: false to provide an external database via database.external.*.
   database:
     enabled: true
     # -- External database connection (used when database.enabled=false).
@@ -178,35 +178,33 @@ metastore:
       host: ""
       port: 5432
       name: "metastore"
-      user: ""
-      # -- Name of an existing secret with key 'password'.
+      user: "hive"
+      # -- Name of an existing secret containing the password.
       existingSecret: ""
+      # -- Key in existingSecret that holds the password.
       existingSecretPasswordKey: "password"
-    backup:
-      pitr:
-        enabled: false
-    engine:
-      replicas: 1
-      resources:
-        cpu: "1"
-        memory: "2G"
-      storage:
-        class: "standard"
-        size: "25Gi"
-      type: "postgresql"
-      version: "16.0"
-    monitoring:
-      resources: {}
-    proxy:
-      expose:
-        type: ClusterIP
-      replicas: 1
-      resources:
-        cpu: "1"
-        memory: "2G"
-      type: pgbouncer
-      config: |
-        query_wait_timeout=0
+
+# ─── Bitnami PostgreSQL subchart ─────────────────────────────────────────────
+# -- Configuration for the embedded Bitnami postgresql subchart.
+# Ref: https://github.com/bitnami/charts/tree/main/bitnami/postgresql
+postgresql:
+  # -- Use the legacy Debian-based image from Docker Hub (bitnamilegacy).
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/postgresql
+    tag: "16"
+  auth:
+    # -- Database name created for Hive Metastore.
+    database: metastore
+    # -- Username for the Hive Metastore database.
+    username: hive
+    # -- Password for the Hive user. Override in production via existingSecret.
+    password: ""
+    # -- Name of an existing secret with keys 'password' and 'postgres-password'.
+    existingSecret: ""
+  primary:
+    persistence:
+      size: 8Gi
 
 # ─── HiveServer2 ─────────────────────────────────────────────────────────────
 hiveserver2:

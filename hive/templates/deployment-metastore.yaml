@@ -40,87 +40,32 @@ spec:
         {{- if .Values.metastore.extraVolumes }}
         {{- toYaml .Values.metastore.extraVolumes | nindent 8 }}
         {{- end }}
-      {{- if or .Values.metastore.initContainers .Values.metastore.database.enabled }}
       initContainers:
-        {{- if and .Values.metastore.database.enabled (eq .Values.metastore.database.engine.type "postgresql") }}
         - name: 01-wait-for-db
           image: postgres:alpine
           env:
-            - name: HMS_DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'pgbouncer-host'
-            - name: HMS_DB_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'pgbouncer-port'
-            - name: HMS_DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'user'
             - name: HMS_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'password'
+                  name: {{ include "hive.pgSecretName" . }}
+                  key: {{ include "hive.pgSecretPasswordKey" . }}
           command: ["/bin/sh", "-c"]
           args:
             - |
               export PGPASSWORD="$HMS_DB_PASSWORD"
-              until pg_isready -h "$HMS_DB_HOST" -p "$HMS_DB_PORT" -U "$HMS_DB_USER"; do
-                echo "Waiting for PgBouncer..."
+              until pg_isready -h "{{ include "hive.pgHost" . }}" -p "{{ include "hive.pgPort" . }}" -U "{{ include "hive.pgUser" . }}"; do
+                echo "Waiting for PostgreSQL..."
                 sleep 5
               done
-              echo "PgBouncer is reachable."
-              until psql -h "$HMS_DB_HOST" -p "$HMS_DB_PORT" -U "$HMS_DB_USER" -d postgres -c "SELECT 1;" >/dev/null 2>&1; do
-                echo "Waiting for PostgreSQL backend..."
-                sleep 5
-              done
-              echo "Backend PostgreSQL is reachable through PgBouncer."
-        - name: 02-init-db
-          image: postgres:alpine
-          env:
-            - name: HMS_DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'pgbouncer-host'
-            - name: HMS_DB_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'pgbouncer-port'
-            - name: HMS_DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'user'
-            - name: HMS_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'password'
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              export PGPASSWORD=$HMS_DB_PASSWORD
-              if ! psql -h $HMS_DB_HOST -p $HMS_DB_PORT -U $HMS_DB_USER -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='metastore'" | grep -q 1; then
-                psql -h $HMS_DB_HOST -p $HMS_DB_PORT -U $HMS_DB_USER -d postgres -c "CREATE DATABASE metastore;"
-                echo "Database 'metastore' created."
-              else
-                echo "Database 'metastore' already exists."
-              fi
-        - name: 03-setup-credential-provider
+              echo "PostgreSQL is ready."
+        - name: 02-setup-credential-provider
           image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.metastore.image "chart" .Chart) }}
           env:
             - name: HMS_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'password'
+                  name: {{ include "hive.pgSecretName" . }}
+                  key: {{ include "hive.pgSecretPasswordKey" . }}
           volumeMounts:
             - name: credential-provider-volume
               mountPath: /opt/hive/secrets
@@ -130,11 +75,9 @@ spec:
               hadoop credential create javax.jdo.option.ConnectionPassword \
                 -value ${HMS_DB_PASSWORD} \
                 -provider jceks://file/opt/hive/secrets/hive.jceks
-        {{- end }}
         {{- if .Values.metastore.initContainers }}
         {{- tpl (toYaml .Values.metastore.initContainers) . | nindent 8 }}
         {{- end }}
-      {{- end }}
       containers:
         - name: metastore
           image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.metastore.image "chart" .Chart) }}
@@ -142,31 +85,20 @@ spec:
           env:
             - name: SERVICE_NAME
               value: metastore
-            {{- if and .Values.metastore.database.enabled (eq .Values.metastore.database.engine.type "postgresql") }}
             - name: DB_DRIVER
               value: "postgres"
             - name: HMS_DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'pgbouncer-host'
+              value: {{ include "hive.pgHost" . | quote }}
             - name: HMS_DB_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'pgbouncer-port'
+              value: {{ include "hive.pgPort" . | quote }}
             - name: HMS_DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: 'everest-secrets-{{ .Release.Name }}-hms-db'
-                  key: 'user'
+              value: {{ include "hive.pgUser" . | quote }}
             - name: SERVICE_OPTS
               value: >
                 -Xmx2G
                 -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
-                -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://$(HMS_DB_HOST):$(HMS_DB_PORT)/metastore
-                -Djavax.jdo.option.ConnectionUserName=$(HMS_DB_USER)
-            {{- end }}
+                -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://{{ include "hive.pgHost" . }}:{{ include "hive.pgPort" . }}/{{ include "hive.pgDatabase" . }}
+                -Djavax.jdo.option.ConnectionUserName={{ include "hive.pgUser" . }}
             {{- $envYaml := include "hive.mergeEnv" (dict "defaultEnv" .Values.env "specificEnv" .Values.metastore.env) -}}
             {{- if $envYaml }}
             {{- $envYaml | nindent 12 }}

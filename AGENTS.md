@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-07-21T16:00:59Z
-**Commit:** 7e8f6dd
+**Generated:** 2026-07-21T16:57:06Z
+**Commit:** ccfe228
 **Branch:** master
 
 ## OVERVIEW
@@ -10,10 +10,11 @@ Helm chart repository for Apache Hive (Metastore + HiveServer2) on Kubernetes, p
 ## STRUCTURE
 ```
 charts/
-├── hive/               # The only chart — Apache Hive 4.0.0 (see hive/AGENTS.md)
+├── hive/                # The only chart — Apache Hive 4.0.0 (see hive/AGENTS.md)
+├── README.md            # Repo-level README (install quickstart, chart table)
 ├── artifacthub-repo.yml # Artifact Hub repository metadata
 └── .github/workflows/
-    └── release.yaml    # chart-releaser: packages + publishes on push to master
+    └── release.yaml     # chart-releaser: packages + publishes on push to master
 ```
 
 ## WHERE TO LOOK
@@ -56,8 +57,8 @@ No LSP available (YAML/Helm project). Key Helm named templates (defined in `_hel
 - **HiveServer2 is disabled by default** (`hiveserver2.enabled: false`) — this is intentional.
 
 ## UNIQUE STYLES
-- **Percona Everest CRD**: Metastore database is provisioned via `DatabaseCluster` CRD (`databasecluster-metastore.yaml`). Requires Percona Everest operator in cluster.
-- **Credential JCEKS**: Metastore uses a Hadoop credential provider (`hadoop.security.credential.provider.path: jceks://file/opt/hive/secrets/hive.jceks`) — credentials injected via init container.
+- **Bitnami PostgreSQL subchart**: Metastore database is provisioned via the `bitnami/postgresql` subchart (`hive/charts/postgresql-18.8.0.tgz`). Uses `docker.io/bitnamilegacy/postgresql:16` (legacy Debian-based image).
+- **Credential JCEKS**: Metastore uses a Hadoop credential provider (`hadoop.security.credential.provider.path: jceks://file/opt/hive/secrets/hive.jceks`) — credentials injected via init container from the Bitnami-generated secret `<release>-postgresql`.
 - **`artifacthub-pkg.yml`** lives inside each chart directory (not root) — Artifact Hub picks it up automatically.
 
 ## COMMANDS
@@ -71,9 +72,13 @@ helm template my-hive hive/
 # Template with custom values
 helm template my-hive hive/ -f my-values.yaml
 
-# Install (Artifact Hub)
+# Install (published repo)
 helm repo add opstty https://opstty.github.io/charts
+helm repo update
 helm install my-hive opstty/hive
+
+# Helm index (live)
+curl https://opstty.github.io/charts/index.yaml
 
 # Release: push to master → GitHub Actions runs chart-releaser automatically
 ```
@@ -83,3 +88,6 @@ helm install my-hive opstty/hive
 - **kubeVersion**: `>=1.23.0` — enforced by Chart.yaml.
 - **Artifact Hub**: `artifacthub-repo.yml` at root has empty `repositoryID` — filled by AH post-registration.
 - **Branch**: `master` (not `main`) — CI trigger is `master`.
+- **gh-pages bootstrap**: branch must exist before first chart-releaser run — create it as an orphan branch manually if starting from scratch.
+- **Release tagging**: chart-releaser uses `<chart>-<version>` git tags (e.g. `hive-0.1.1`) as the diff baseline; without a prior tag it detects no changes.
+- **Helm index URL**: `https://opstty.github.io/charts/index.yaml`
