@@ -1,0 +1,32 @@
+{{- if .Values.hiveserver2.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hive.fullname" . }}-hiveserver2
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hive.labels" . | nindent 4 }}
+    app.kubernetes.io/component: hiveserver2
+  {{- with .Values.hiveserver2.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.hiveserver2.service.type }}
+  ports:
+    - name: thrift
+      protocol: TCP
+      port: {{ .Values.hiveserver2.service.thriftPort }}
+      targetPort: thrift
+    - name: http
+      protocol: TCP
+      port: {{ .Values.hiveserver2.service.httpPort }}
+      targetPort: http
+    - name: webui
+      protocol: TCP
+      port: {{ .Values.hiveserver2.service.webuiPort }}
+      targetPort: webui
+  selector:
+    {{- include "hive.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: hiveserver2
+{{- end -}}

@@ -1,0 +1,278 @@
+# Default values for hive.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Override resource names to avoid name conflicts when deploying multiple
+# releases in the same namespace.
+nameOverride: ""
+fullnameOverride: ""
+
+# -- Common labels applied to all resources.
+commonLabels: {}
+
+# -- Common annotations applied to all resources.
+commonAnnotations: {}
+
+# -- Global default replica count (can be overridden per component).
+replicas: 1
+
+# -- Global image pull secrets.
+imagePullSecrets: []
+
+# -- Global image settings (used as defaults for both metastore and hiveserver2).
+image:
+  registry: ""
+  repository: "apache/hive"
+  pullPolicy: IfNotPresent
+  tag: ""
+  digest: ""
+  useRepositoryAsSoleImageReference: false
+
+# -- Global environment variables injected into all containers.
+env: []
+# - name: MY_VAR
+#   value: "my-value"
+
+# -- Global envFrom (secrets/configmaps) injected into all containers.
+envFrom: []
+# - secretRef:
+#     name: my-secret
+
+# -- Global hive-site.xml properties (merged with component-specific overrides).
+hiveSite:
+  properties:
+    hive.server2.enable.doAs: "true"
+    hive.tez.exec.inplace.progress: "false"
+    hive.tez.exec.print.summary: "true"
+    hive.exec.scratchdir: "/opt/hive/scratch_dir"
+    hive.user.install.directory: "/opt/hive/install_dir"
+    tez.runtime.optimize.local.fetch: "true"
+    hive.exec.submit.local.task.via.child: "false"
+    mapreduce.framework.name: "local"
+    tez.local.mode: "true"
+    hive.execution.engine: "tez"
+    hive.metastore.warehouse.dir: "/opt/hive/data/warehouse"
+    metastore.metastore.event.db.notification.api.auth: "false"
+    hive.server2.thrift.bind.host: "0.0.0.0"
+    hive.server2.webui.host: "0.0.0.0"
+    datanucleus.autoCreateSchema: "false"
+    datanucleus.fixedDatastore: "true"
+    datanucleus.autoStartMechanism: "SchemaTable"
+    hive.metastore.schema.verification: "true"
+    hadoop.security.credential.provider.path: "jceks://file/opt/hive/secrets/hive.jceks"
+
+# -- Global metastore-site.xml properties (merged with metastore-specific overrides).
+metastoreSite:
+  properties:
+    metastore.thrift.uris: "thrift://0.0.0.0:9083"
+    metastore.task.threads.always: "org.apache.hadoop.hive.metastore.events.EventCleanerTask,org.apache.hadoop.hive.metastore.MaterializationsRebuildLockCleanerTask"
+    metastore.expression.proxy: "org.apache.hadoop.hive.metastore.DefaultPartitionExpressionProxy"
+
+# ─── ServiceAccount ──────────────────────────────────────────────────────────
+serviceAccount:
+  # -- Whether to create a ServiceAccount.
+  create: false
+  # -- Annotations to add to the ServiceAccount.
+  annotations: {}
+  # -- Name of the ServiceAccount. Defaults to the fullname if create=true.
+  name: ""
+
+# ─── Hive Metastore ──────────────────────────────────────────────────────────
+metastore:
+  # -- Enable/disable the Hive Metastore component.
+  enabled: true
+
+  # -- Number of Metastore replicas (falls back to global .Values.replicas).
+  replicas: null
+
+  # -- Component-specific image overrides.
+  image:
+    registry: ""
+    repository: ""
+    pullPolicy: ""
+    tag: ""
+    digest: ""
+
+  # -- Component-specific image pull secrets.
+  imagePullSecrets: []
+
+  # -- Additional init containers (raw YAML, supports tpl).
+  initContainers: []
+
+  # -- Component-specific environment variables (merged with global env).
+  env: []
+
+  # -- Component-specific envFrom.
+  envFrom: []
+
+  # -- Extra volumes to attach to the Metastore pod.
+  extraVolumes: []
+  # - name: extra-config
+  #   configMap:
+  #     name: my-config
+
+  # -- Extra volume mounts for the Metastore container.
+  extraVolumeMounts: []
+  # - name: extra-config
+  #   mountPath: /opt/hive/conf/extra
+
+  # -- Component-specific hive-site.xml overrides (merged on top of global).
+  hiveSite:
+    properties: {}
+
+  # -- Component-specific metastore-site.xml overrides (merged on top of global).
+  metastoreSite:
+    properties: {}
+
+  # -- Resource requests/limits for the Metastore container.
+  resources: {}
+  # requests:
+  #   cpu: "500m"
+  #   memory: "1Gi"
+  # limits:
+  #   cpu: "2"
+  #   memory: "4Gi"
+
+  # -- Service configuration for the Metastore.
+  service:
+    type: ClusterIP
+    port: 9083
+    annotations: {}
+
+  # -- Startup probe configuration.
+  startupProbe:
+    failureThreshold: null
+    periodSeconds: null
+
+  # -- Liveness probe configuration.
+  livenessProbe:
+    initialDelaySeconds: null
+    periodSeconds: null
+
+  # -- Readiness probe configuration.
+  readinessProbe:
+    initialDelaySeconds: null
+    periodSeconds: null
+
+  # -- Ingress configuration for the Metastore (useful for exposing thrift via TCP ingress).
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts: []
+    # - host: hive-metastore.example.com
+    #   paths:
+    #     - path: /
+    #       pathType: Prefix
+    tls: []
+    # - secretName: hive-metastore-tls
+    #   hosts:
+    #     - hive-metastore.example.com
+
+  # -- Embedded PostgreSQL database via Percona Everest DatabaseCluster CRD.
+  # Set enabled: false to manage the database externally.
+  database:
+    enabled: true
+    # -- External database connection (used when database.enabled=false).
+    external:
+      host: ""
+      port: 5432
+      name: "metastore"
+      user: ""
+      # -- Name of an existing secret with key 'password'.
+      existingSecret: ""
+      existingSecretPasswordKey: "password"
+    backup:
+      pitr:
+        enabled: false
+    engine:
+      replicas: 1
+      resources:
+        cpu: "1"
+        memory: "2G"
+      storage:
+        class: "standard"
+        size: "25Gi"
+      type: "postgresql"
+      version: "16.0"
+    monitoring:
+      resources: {}
+    proxy:
+      expose:
+        type: ClusterIP
+      replicas: 1
+      resources:
+        cpu: "1"
+        memory: "2G"
+      type: pgbouncer
+      config: |
+        query_wait_timeout=0
+
+# ─── HiveServer2 ─────────────────────────────────────────────────────────────
+hiveserver2:
+  # -- Enable/disable HiveServer2 component.
+  enabled: false
+
+  # -- Number of HiveServer2 replicas (falls back to global .Values.replicas).
+  replicas: null
+
+  # -- Component-specific image overrides.
+  image:
+    registry: ""
+    repository: ""
+    pullPolicy: ""
+    tag: ""
+    digest: ""
+
+  # -- Component-specific image pull secrets.
+  imagePullSecrets: []
+
+  # -- Component-specific environment variables (merged with global env).
+  env: []
+
+  # -- Component-specific envFrom.
+  envFrom: []
+
+  # -- Extra volumes to attach to the HiveServer2 pod.
+  extraVolumes: []
+
+  # -- Extra volume mounts for the HiveServer2 container.
+  extraVolumeMounts: []
+
+  # -- Component-specific hive-site.xml overrides (merged on top of global).
+  hiveSite:
+    properties: {}
+
+  # -- Resource requests/limits for the HiveServer2 container.
+  resources: {}
+
+  # -- Service configuration for HiveServer2.
+  service:
+    type: ClusterIP
+    thriftPort: 10000
+    httpPort: 10001
+    webuiPort: 10002
+    annotations: {}
+
+  # -- Startup probe configuration.
+  startupProbe:
+    failureThreshold: null
+    periodSeconds: null
+
+  # -- Liveness probe configuration.
+  livenessProbe:
+    initialDelaySeconds: null
+    periodSeconds: null
+
+  # -- Readiness probe configuration.
+  readinessProbe:
+    initialDelaySeconds: null
+    periodSeconds: null
+
+  # -- Ingress configuration for HiveServer2.
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts: []
+    tls: []

@@ -1,0 +1,19 @@
+Apache Hive has been deployed.
+
+Components enabled:
+{{- if .Values.metastore.enabled }}
+  ✓ Hive Metastore (thrift://{{ include "hive.fullname" . }}-metastore.{{ .Release.Namespace }}:{{ .Values.metastore.service.port }})
+{{- else }}
+  ✗ Hive Metastore (disabled)
+{{- end }}
+{{- if .Values.hiveserver2.enabled }}
+  ✓ HiveServer2 (jdbc:hive2://{{ include "hive.fullname" . }}-hiveserver2.{{ .Release.Namespace }}:{{ .Values.hiveserver2.service.thriftPort }})
+{{- else }}
+  ✗ HiveServer2 (disabled — set hiveserver2.enabled=true to activate)
+{{- end }}
+
+{{- if and .Values.metastore.enabled .Values.metastore.database.enabled }}
+
+  ℹ  Percona Everest DatabaseCluster '{{ .Release.Name }}-hms-db' will be provisioned.
+     Ensure the Percona Everest operator is installed in your cluster.
+{{- end }}

@@ -1,0 +1,93 @@
+{{- if .Values.hiveserver2.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hive.fullname" . }}-hiveserver2
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hive.labels" . | nindent 4 }}
+    app.kubernetes.io/component: hiveserver2
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.hiveserver2.replicas | default .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "hive.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: hiveserver2
+  template:
+    metadata:
+      labels:
+        {{- include "hive.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: hiveserver2
+    spec:
+      {{- if (.Values.hiveserver2.imagePullSecrets | default .Values.imagePullSecrets) }}
+      imagePullSecrets:
+        {{- toYaml (.Values.hiveserver2.imagePullSecrets | default .Values.imagePullSecrets) | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "hive.serviceAccountName" . }}
+      volumes:
+        - name: hive-site-config
+          configMap:
+            name: {{ include "hive.fullname" . }}-hive-site
+        - name: credential-provider-volume
+          emptyDir: {}
+        {{- if .Values.hiveserver2.extraVolumes }}
+        {{- toYaml .Values.hiveserver2.extraVolumes | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: hiveserver2
+          image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.hiveserver2.image "chart" .Chart) }}
+          imagePullPolicy: {{ .Values.hiveserver2.image.pullPolicy | default .Values.image.pullPolicy }}
+          env:
+            - name: SERVICE_NAME
+              value: hiveserver2
+            {{- $envYaml := include "hive.mergeEnv" (dict "defaultEnv" .Values.env "specificEnv" .Values.hiveserver2.env) -}}
+            {{- if $envYaml }}
+            {{- $envYaml | nindent 12 }}
+            {{- end }}
+          {{- if .Values.hiveserver2.envFrom }}
+          envFrom:
+            {{- toYaml .Values.hiveserver2.envFrom | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: thrift
+              containerPort: {{ .Values.hiveserver2.service.thriftPort }}
+              protocol: TCP
+            - name: http
+              containerPort: {{ .Values.hiveserver2.service.httpPort }}
+              protocol: TCP
+            - name: webui
+              containerPort: {{ .Values.hiveserver2.service.webuiPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: hive-site-config
+              mountPath: /opt/hive/conf/hive-site.xml
+              subPath: hive-site.xml
+            - name: credential-provider-volume
+              mountPath: /opt/hive/secrets
+            {{- if .Values.hiveserver2.extraVolumeMounts }}
+            {{- toYaml .Values.hiveserver2.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+          {{- with .Values.hiveserver2.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          startupProbe:
+            tcpSocket:
+              port: thrift
+            failureThreshold: {{ .Values.hiveserver2.startupProbe.failureThreshold | default 30 }}
+            periodSeconds: {{ .Values.hiveserver2.startupProbe.periodSeconds | default 10 }}
+          livenessProbe:
+            tcpSocket:
+              port: thrift
+            initialDelaySeconds: {{ .Values.hiveserver2.livenessProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .Values.hiveserver2.livenessProbe.periodSeconds | default 20 }}
+          readinessProbe:
+            tcpSocket:
+              port: thrift
+            initialDelaySeconds: {{ .Values.hiveserver2.readinessProbe.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.hiveserver2.readinessProbe.periodSeconds | default 10 }}
+{{- end -}}

@@ -1,0 +1,4 @@
+repositoryID: ""  # Rempli automatiquement par Artifact Hub après enregistrement
+owners:
+  - name: opstty
+    email: ""  # Optionnel

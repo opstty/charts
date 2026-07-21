@@ -1,0 +1,42 @@
+{{- if and .Values.metastore.enabled .Values.metastore.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "hive.fullname" . }}-metastore
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hive.labels" . | nindent 4 }}
+  {{- with .Values.metastore.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.metastore.ingress.className }}
+  ingressClassName: {{ .Values.metastore.ingress.className }}
+  {{- end }}
+  {{- if .Values.metastore.ingress.tls }}
+  tls:
+    {{- range .Values.metastore.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ tpl .secretName $ }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.metastore.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "hive.fullname" $ }}-metastore
+                port:
+                  number: {{ $.Values.metastore.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end -}}

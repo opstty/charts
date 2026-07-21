@@ -1,0 +1,42 @@
+{{- if and .Values.hiveserver2.enabled .Values.hiveserver2.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "hive.fullname" . }}-hiveserver2
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hive.labels" . | nindent 4 }}
+  {{- with .Values.hiveserver2.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.hiveserver2.ingress.className }}
+  ingressClassName: {{ .Values.hiveserver2.ingress.className }}
+  {{- end }}
+  {{- if .Values.hiveserver2.ingress.tls }}
+  tls:
+    {{- range .Values.hiveserver2.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ tpl .secretName $ }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.hiveserver2.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "hive.fullname" $ }}-hiveserver2
+                port:
+                  number: {{ $.Values.hiveserver2.service.thriftPort }}
+          {{- end }}
+    {{- end }}
+{{- end -}}

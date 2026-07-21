@@ -1,0 +1,16 @@
+apiVersion: v2
+name: hive
+version: 0.1.0
+kubeVersion: ">=1.23.0"
+description: A Helm chart for Apache Hive (Metastore + HiveServer2) deployment.
+type: application
+keywords:
+  - apache
+  - hive
+  - hiveserver2
+  - metastore
+  - data-warehouse
+home: https://hive.apache.org
+icon: https://hive.apache.org/images/hive.svg
+appVersion: "4.0.0"
+deprecated: false

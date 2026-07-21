@@ -1,0 +1,31 @@
+version: 0.1.0
+name: hive
+displayName: Apache Hive
+createdAt: "2026-07-21T00:00:00Z"
+description: A Helm chart for Apache Hive (Metastore + HiveServer2) deployment.
+logoURL: https://hive.apache.org/images/hive.svg
+homeURL: https://hive.apache.org
+readme: ""  # Artifact Hub lira le README.md du chart automatiquement
+install: |
+  ```bash
+  helm repo add opstty https://opstty.github.io/charts
+  helm install my-hive opstty/hive
+  ```
+links:
+  - name: Apache Hive
+    url: https://hive.apache.org
+  - name: GitHub
+    url: https://github.com/opstty/charts
+license: Apache-2.0
+maintainers:
+  - name: opstty
+keywords:
+  - apache
+  - hive
+  - hiveserver2
+  - metastore
+  - data-warehouse
+annotations:
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial release

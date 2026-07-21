@@ -1,0 +1,24 @@
+{{- if .Values.metastore.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hive.fullname" . }}-metastore
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hive.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metastore
+  {{- with .Values.metastore.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.metastore.service.type }}
+  ports:
+    - name: thrift
+      protocol: TCP
+      port: {{ .Values.metastore.service.port }}
+      targetPort: thrift
+  selector:
+    {{- include "hive.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: metastore
+{{- end -}}
