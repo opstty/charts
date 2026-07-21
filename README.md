@@ -24,7 +24,7 @@ helm install my-hive opstty/hive
 # Metastore + HiveServer2
 helm install my-hive opstty/hive --set hiveserver2.enabled=true
 
-# External PostgreSQL (no Percona Everest)
+# External PostgreSQL (no embedded subchart)
 helm install my-hive opstty/hive \
   --set metastore.database.enabled=false \
   --set metastore.database.external.host=my-postgres \
@@ -38,7 +38,7 @@ See [hive/README.md](./hive/README.md) for full configuration reference.
 
 - Kubernetes 1.23+
 - Helm 3.x
-- [Percona Everest](https://docs.percona.com/everest/index.html) operator — required when `metastore.database.enabled=true` (the default)
+- PersistentVolume support in the cluster — required when `metastore.database.enabled=true` (the default, uses Bitnami PostgreSQL subchart)
 
 ## Development
 

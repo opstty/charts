@@ -19,13 +19,13 @@ This chart bootstraps an Apache Hive deployment on a Kubernetes cluster using th
 |---|---|---|
 | Hive Metastore (HMS) | ✅ enabled | Thrift metadata service on port 9083 |
 | HiveServer2 | ❌ disabled | JDBC/ODBC gateway (enable with `hiveserver2.enabled=true`) |
-| PostgreSQL (Percona Everest) | ✅ enabled | Embedded DB via `DatabaseCluster` CRD |
+| PostgreSQL (Bitnami subchart) | ✅ enabled | Embedded DB via `bitnami/postgresql` subchart |
 
 ## Prerequisites
 
 - Kubernetes 1.23+
 - Helm 3.x
-- [Percona Everest](https://docs.percona.com/everest/index.html) operator (if `metastore.database.enabled=true`)
+- PersistentVolume support in the cluster (for the embedded PostgreSQL)
 
 ## Installing the Chart
 
@@ -50,7 +50,7 @@ helm install my-hive opstty/hive \
   --set hiveserver2.enabled=true
 ```
 
-### External database (no Percona Everest)
+### External database (no embedded PostgreSQL)
 
 ```bash
 helm install my-hive opstty/hive \
@@ -89,7 +89,7 @@ helm install my-hive opstty/hive \
 | `metastore.replicas` | Number of replicas | `1` |
 | `metastore.service.port` | Thrift service port | `9083` |
 | `metastore.resources` | Resource requests/limits | `{}` |
-| `metastore.database.enabled` | Deploy embedded PostgreSQL (Percona Everest) | `true` |
+| `metastore.database.enabled` | Deploy embedded PostgreSQL (Bitnami subchart) | `true` |
 
 ### HiveServer2
 

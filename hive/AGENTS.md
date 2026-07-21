@@ -14,7 +14,7 @@ hive/
     ├── _helpers.tpl                    # all named templates (8 helpers)
     ├── configmap-hive-site.yaml        # renders hive-site.xml
     ├── configmap-metastore-site.yaml   # renders metastore-site.xml
-    ├── databasecluster-metastore.yaml  # Percona Everest DatabaseCluster CRD
+    ├── charts/postgresql-18.8.0.tgz    # Bitnami PostgreSQL subchart (legacy image)
     ├── deployment-metastore.yaml       # Metastore Deployment (heaviest template)
     ├── deployment-hiveserver2.yaml     # HiveServer2 Deployment
     ├── ingress-metastore.yaml
@@ -29,7 +29,7 @@ hive/
 | Task | Location | Notes |
 |------|----------|-------|
 | Add a new hive-site.xml property | `values.yaml` → `hiveSite.properties` | Component-level overrides go in `metastore.hiveSite.properties` / `hiveserver2.hiveSite.properties` |
-| Change DB provisioning | `templates/databasecluster-metastore.yaml` + `values.yaml` `metastore.database.*` | Percona Everest `DatabaseCluster` CRD |
+| Change DB provisioning | `values.yaml` `postgresql.*` + `metastore.database.*` | Bitnami subchart config; use `metastore.database.enabled: false` for external DB |
 | Override image per component | `values.yaml` `metastore.image.*` / `hiveserver2.image.*` | Empty fields inherit global `image.*` |
 | Add env var | `values.yaml` `env[]` (global) or `metastore.env[]` / `hiveserver2.env[]` | Component-level wins over global by `name` key |
 | Credential injection logic | `templates/deployment-metastore.yaml` init containers | Writes JCEKS file from env vars |
