@@ -3,6 +3,25 @@ entries:
   hive:
   - apiVersion: v2
     appVersion: 4.0.0
+    created: "2026-07-21T16:37:27.734792128Z"
+    description: A Helm chart for Apache Hive (Metastore + HiveServer2) deployment.
+    digest: 0bab1c5056fd5ad5b7d1881338e3dbdbbe5cc38ac1210b3d197f3923fb05925e
+    home: https://hive.apache.org
+    icon: https://hive.apache.org/images/hive.svg
+    keywords:
+    - apache
+    - hive
+    - hiveserver2
+    - metastore
+    - data-warehouse
+    kubeVersion: '>=1.23.0'
+    name: hive
+    type: application
+    urls:
+    - https://github.com/opstty/charts/releases/download/hive-0.1.2/hive-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 4.0.0
     created: "2026-07-21T16:27:35.105806058Z"
     description: A Helm chart for Apache Hive (Metastore + HiveServer2) deployment.
     digest: 7f72cc6fecc7fb8eb42de15f97fcf792fa0ae993e5b24f743859c3291f4cf990
@@ -20,4 +39,4 @@ entries:
     urls:
     - https://github.com/opstty/charts/releases/download/hive-0.1.1/hive-0.1.1.tgz
     version: 0.1.1
-generated: "2026-07-21T16:27:35.10581182Z"
+generated: "2026-07-21T16:37:27.734801115Z"
