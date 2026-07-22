@@ -1,0 +1,16 @@
+{{- if .Values.registerTable.configmap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "trino.fullname" . }}-register-table-configmap
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "trino.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  register_table.json: |
+{{- .Values.registerTable.configmap.data | nindent 4 }}
+{{- end }}

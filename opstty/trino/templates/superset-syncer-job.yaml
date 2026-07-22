@@ -1,0 +1,72 @@
+{{- if .Values.superset.syncer.job.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "trino.fullname" . }}-superset-syncer-job
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "trino.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+    {{- with .Values.commonAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "trino.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.superset.syncer.job.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-superset
+          image: "{{ .Values.superset.syncer.job.waitImage.repository }}:{{ .Values.superset.syncer.job.waitImage.tag }}"
+          env:
+            - name: SUPERSET_URL
+              value: {{ .Values.superset.url | quote }}
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              until curl -sfk "$SUPERSET_URL/health"; do
+                echo "Waiting for superset at $SUPERSET_URL/health..."
+                sleep 3
+              done
+              echo "Superset is ready!"
+      containers:
+        - name: syncer
+          image: "{{ .Values.superset.syncer.job.image.repository }}:{{ .Values.superset.syncer.job.image.tag }}"
+          imagePullPolicy: {{ .Values.superset.syncer.job.image.pullPolicy }}
+          env:
+            - name: SUPERSET_URL
+              value: {{ .Values.superset.url | quote }}
+            - name: SUPERSET_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.superset.syncer.job.adminCredentialsSecretName | quote }}
+                  key: {{ .Values.superset.syncer.job.adminCredentialsSecretKey | quote }}
+            - name: TRINO_HOST
+              value: "{{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}"
+          volumeMounts:
+            - name: credentials-volume
+              mountPath: /tmp/
+            - name: access-control-volume
+              mountPath: /etc/trino/access-control
+            - name: superset-roles-volume
+              mountPath: /etc/superset/access-control
+      volumes:
+        - name: credentials-volume
+          secret:
+            secretName: {{ .Values.superset.syncer.job.credentialsSecretName | quote }}
+        - name: access-control-volume
+          configMap:
+            name: {{ include "trino.fullname" . }}-trino-access-control-volume-coordinator
+        - name: superset-roles-volume
+          configMap:
+            name: {{ include "trino.fullname" . }}-superset-roles-configmap
+{{- end }}

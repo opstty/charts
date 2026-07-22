@@ -1,0 +1,40 @@
+{{- if .Values.coordinatorCertificate.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "trino.fullname" . }}-coordinator-certificate
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "trino.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  secretName: {{ include "trino.fullname" . }}-coordinator-certificate-secret
+  commonName: {{ include "trino.fullname" . }}-coordinator-certificate
+  additionalOutputFormats:
+    - type: CombinedPEM
+  dnsNames:
+    - {{ include "trino.fullname" . }}-trino
+    - {{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}
+    - {{ include "trino.fullname" . }}-trino-coordinator
+    - {{ include "trino.fullname" . }}-trino-coordinator.{{ .Release.Namespace }}
+    {{- with .Values.coordinatorCertificate.host }}
+    - {{ . }}
+    {{- end }}
+    {{- range .Values.coordinatorCertificate.additionalDnsNames }}
+    - {{ . }}
+    {{- end }}
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  privateKey:
+    algorithm: {{ .Values.coordinatorCertificate.privateKey.algorithm }}
+    size: {{ .Values.coordinatorCertificate.privateKey.size }}
+    encoding: {{ .Values.coordinatorCertificate.privateKey.encoding }}
+  issuerRef:
+    name: {{ .Values.coordinatorCertificate.issuerRef.name }}
+    kind: {{ .Values.coordinatorCertificate.issuerRef.kind }}
+{{- end }}

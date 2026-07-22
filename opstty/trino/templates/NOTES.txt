@@ -1,0 +1,60 @@
+Trino has been deployed.
+
+  ✓ Trino Coordinator: {{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}:8080
+
+To port-forward the Trino coordinator:
+
+  kubectl port-forward svc/{{ include "trino.fullname" . }}-trino 8080:8080 -n {{ .Release.Namespace }}
+
+Then access the Trino UI at: http://localhost:8080
+{{- if .Values.coordinatorIngress.enabled }}
+
+  ✓ Ingress enabled: {{ .Values.coordinatorIngress.host }}
+{{- end }}
+{{- if .Values.coordinatorCertificate.enabled }}
+
+  ✓ TLS certificate managed by cert-manager ({{ .Values.coordinatorCertificate.issuerRef.name }})
+{{- end }}
+{{- if .Values.hive.enabled }}
+
+  ✓ Hive Metastore co-deployed from the sibling chart
+{{- end }}
+{{- if .Values.passwordAuthentication.enabled }}
+
+  ✓ Password authentication init container enabled ({{ .Values.passwordAuthentication.image.repository }}:{{ .Values.passwordAuthentication.image.tag }})
+
+  Make sure your values include the following under the trino subchart:
+
+    trino:
+      initContainers:
+        coordinator:
+          - name: password-authentication
+            image: {{ .Values.passwordAuthentication.image.repository }}:{{ .Values.passwordAuthentication.image.tag }}
+            imagePullPolicy: {{ .Values.passwordAuthentication.image.pullPolicy }}
+            volumeMounts:
+              - name: credentials-volume
+                mountPath: /tmp/
+              - name: encrypted-credentials-volume
+                mountPath: /etc/trino/auth/password/
+      coordinator:
+        additionalVolumes:
+          - name: encrypted-credentials-volume
+            emptyDir: {}
+          - name: credentials-volume
+            secret:
+              secretName: {{ .Values.passwordAuthentication.credentialsSecretName | default "<your-secret-name>" }}
+              items:
+                - key: {{ .Values.passwordAuthentication.credentialsSecretKey }}
+                  path: password.db
+        additionalVolumeMounts:
+          - name: encrypted-credentials-volume
+            mountPath: /etc/trino/auth/password/
+{{- end }}
+{{- if .Values.registerTable.job.enabled }}
+
+  ✓ Register-table job will run as a post-install/post-upgrade hook
+{{- end }}
+{{- if .Values.superset.syncer.job.enabled }}
+
+  ✓ Superset syncer job will run as a post-install/post-upgrade hook
+{{- end }}

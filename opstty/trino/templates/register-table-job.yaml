@@ -1,0 +1,84 @@
+{{- if .Values.registerTable.job.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "trino.fullname" . }}-register-table-job
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "trino.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+    {{- with .Values.commonAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "trino.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.registerTable.job.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: register-table
+          image: "{{ .Values.registerTable.job.image.repository }}:{{ .Values.registerTable.job.image.tag }}"
+          imagePullPolicy: {{ .Values.registerTable.job.image.pullPolicy }}
+          env:
+            - name: TRINO_HOST
+              value: "{{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}"
+            - name: TRINO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.registerTable.job.credentialsSecretName | quote }}
+                  key: password.db
+            - name: SSL_CERT_PATH
+              value: {{ .Values.registerTable.job.sslCertPath | quote }}
+            - name: POSTGRES_HOST
+              {{- if .Values.registerTable.job.postgres.host }}
+              value: {{ .Values.registerTable.job.postgres.host | quote }}
+              {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.registerTable.job.postgres.passwordSecretName | quote }}
+                  key: pgbouncer-host
+              {{- end }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.registerTable.job.postgres.passwordSecretName | quote }}
+                  key: {{ .Values.registerTable.job.postgres.passwordSecretKey | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.registerTable.job.postgres.database | quote }}
+            - name: PG_CA_CERT
+              value: {{ .Values.registerTable.job.postgres.caCertPath | quote }}
+          {{- with .Values.registerTable.job.environmentSecretName }}
+          envFrom:
+            - secretRef:
+                name: {{ . | quote }}
+          {{- end }}
+          volumeMounts:
+            - name: certificates-volume
+              mountPath: /etc/trino/certificate-authority/
+            - name: register-table-volume
+              mountPath: /etc/trino/register
+            {{- if .Values.registerTable.job.postgres.caCertSecretName }}
+            - name: pgbouncer-certificates-volume
+              mountPath: /etc/trino/pgbouncer-certs/
+            {{- end }}
+      volumes:
+        - name: certificates-volume
+          secret:
+            secretName: {{ .Values.registerTable.job.certificateAuthoritySecretName | quote }}
+        - name: register-table-volume
+          configMap:
+            name: {{ include "trino.fullname" . }}-register-table-configmap
+        {{- if .Values.registerTable.job.postgres.caCertSecretName }}
+        - name: pgbouncer-certificates-volume
+          secret:
+            secretName: {{ .Values.registerTable.job.postgres.caCertSecretName | quote }}
+        {{- end }}
+{{- end }}

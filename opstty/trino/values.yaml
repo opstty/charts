@@ -1,0 +1,248 @@
+# Default values for trino.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Override resource names to avoid name conflicts when deploying multiple
+# releases in the same namespace.
+nameOverride: ""
+
+# -- Fully override the generated resource name.
+fullnameOverride: ""
+
+# -- Common labels applied to all resources.
+commonLabels: {}
+
+# -- Common annotations applied to all resources.
+commonAnnotations: {}
+
+# ─── Hive Metastore Subchart ─────────────────────────────────────────────────
+hive:
+  # -- Enable to co-deploy the Hive Metastore from the sibling chart.
+  enabled: false
+
+# ─── Official Trino Subchart ─────────────────────────────────────────────────
+# -- Values passed through to the official trinodb/trino subchart.
+# Ref: https://trinodb.github.io/charts/
+trino:
+  # -- Trino container image settings.
+  image:
+    tag: "481"
+
+  # -- Trino server configuration.
+  server:
+    config:
+      # -- Authentication type (PASSWORD, OAUTH2, CERTIFICATE, etc.).
+      authenticationType: "PASSWORD"
+      https:
+        # -- Enable HTTPS on the coordinator.
+        enabled: false
+    # -- Extra config lines appended to coordinator config.properties.
+    coordinatorExtraConfig: ""
+
+  # -- Access control rules (rules.json).
+  accessControl: {}
+
+  # -- Catalog definitions (one key per catalog file).
+  catalogs: {}
+  # iceberg: |
+  #   connector.name=iceberg
+  #   hive.metastore.uri=thrift://hive-metastore:9083
+
+  # -- Additional config.properties entries.
+  additionalConfigProperties: []
+
+  # -- envFrom for all Trino pods (secrets/configmaps).
+  envFrom: []
+  # - secretRef:
+  #     name: my-secret
+
+  # -- Environment variables for all Trino pods.
+  env: []
+  # - name: MY_VAR
+  #   value: "my-value"
+
+  # -- Init containers for coordinator and worker pods.
+  initContainers:
+    # -- Init containers added to the coordinator pod.
+    coordinator: []
+    # -- Init containers added to worker pods.
+    worker: []
+
+  # -- Coordinator-specific settings.
+  coordinator:
+    # -- Extra volumes attached to the coordinator pod.
+    additionalVolumes: []
+    # -- Extra volume mounts for the coordinator container.
+    additionalVolumeMounts: []
+    # -- Extra config files mounted into the coordinator container.
+    additionalConfigFiles: {}
+
+  # -- Worker-specific settings.
+  worker:
+    # -- Extra volumes attached to worker pods.
+    additionalVolumes: []
+    # -- Extra volume mounts for worker containers.
+    additionalVolumeMounts: []
+
+# ─── Password Authentication ─────────────────────────────────────────────────
+# -- Password authentication init container configuration.
+# Runs before the Trino coordinator to convert a JSON password map into a
+# bcrypt htpasswd file. To enable, set the trino subchart values as shown below.
+# The init container, volumes, and volume mounts must be added to the trino
+# subchart values (trino.initContainers.coordinator, trino.coordinator.additionalVolumes,
+# trino.coordinator.additionalVolumeMounts).
+passwordAuthentication:
+  # -- Enable the password-authentication init container.
+  enabled: false
+  # -- Container image for the password-authentication init container.
+  image:
+    # -- Image repository.
+    repository: "ghcr.io/opstty/trino-password-authentication"
+    # -- Image tag.
+    tag: "latest"
+    # -- Image pull policy.
+    pullPolicy: IfNotPresent
+  # -- Name of the secret containing the JSON password map.
+  credentialsSecretName: ""
+  # -- Key in the credentials secret that holds the password JSON.
+  credentialsSecretKey: "password.db"
+
+# ─── Coordinator Certificate (cert-manager) ──────────────────────────────────
+coordinatorCertificate:
+  # -- Enable a cert-manager Certificate for the Trino coordinator.
+  enabled: false
+
+  # -- Primary DNS host for the certificate.
+  host: ""
+
+  # -- cert-manager issuer reference.
+  issuerRef:
+    # -- Name of the Issuer or ClusterIssuer.
+    name: ""
+    # -- Kind of issuer (Issuer or ClusterIssuer).
+    kind: ClusterIssuer
+
+  # -- Private key settings for the certificate.
+  privateKey:
+    # -- Key algorithm (RSA, ECDSA, Ed25519).
+    algorithm: RSA
+    # -- Key size in bits.
+    size: 4096
+    # -- Key encoding (PKCS1, PKCS8).
+    encoding: PKCS8
+
+  # -- Additional DNS names to include in the certificate.
+  additionalDnsNames: []
+
+# ─── Coordinator Ingress ──────────────────────────────────────────────────────
+coordinatorIngress:
+  # -- Enable an Ingress for the Trino coordinator.
+  enabled: false
+
+  # -- Ingress class name (e.g. nginx, traefik).
+  className: ""
+
+  # -- Hostname for the Ingress rule.
+  host: ""
+
+  # -- Backend service port number.
+  port: 8080
+
+  # -- Annotations to add to the Ingress resource.
+  annotations: {}
+
+# ─── Register Table Job ──────────────────────────────────────────────────────
+registerTable:
+  job:
+    # -- Enable the register-table post-install/upgrade Job.
+    enabled: false
+
+    # -- Container image for the register-table job.
+    image:
+      # -- Image repository.
+      repository: "ghcr.io/opstty/trino-register-table"
+      # -- Image tag.
+      tag: "latest"
+      # -- Image pull policy.
+      pullPolicy: IfNotPresent
+
+    # -- Image pull secrets for private registries.
+    imagePullSecrets: []
+
+    # -- SSL certificate path mounted in the container.
+    sslCertPath: "/etc/trino/certificate-authority/root.ca"
+
+    # -- Name of the secret containing Trino credentials (must contain key password.db).
+    credentialsSecretName: ""
+
+    # -- Name of the secret containing the certificate authority cert.
+    certificateAuthoritySecretName: ""
+
+    # -- Name of the secret containing extra environment variables.
+    environmentSecretName: ""
+
+    # -- Postgres connection configuration for register-table.
+    postgres:
+      # -- Postgres host (or PgBouncer endpoint).
+      host: ""
+      # -- Name of the secret containing the Postgres password.
+      passwordSecretName: ""
+      # -- Key in the password secret that holds the password.
+      passwordSecretKey: "password"
+      # -- Database name to connect to.
+      database: "metastore"
+      # -- CA certificate path for Postgres TLS.
+      caCertPath: "/etc/trino/pgbouncer-certs/root.ca"
+      # -- Name of the secret containing the Postgres CA certificate.
+      caCertSecretName: ""
+
+  configmap:
+    # -- Enable the register-table ConfigMap.
+    enabled: false
+    # -- JSON data for table registration (mounted as register_table.json).
+    data: "{}"
+
+# ─── Superset Integration ────────────────────────────────────────────────────
+superset:
+  # -- Superset base URL.
+  url: ""
+
+  roles:
+    configmap:
+      # -- Enable the Superset roles ConfigMap.
+      enabled: false
+      # -- JSON data for Superset role definitions (mounted as roles.json).
+      data: "{}"
+
+  syncer:
+    job:
+      # -- Enable the Superset syncer post-install/upgrade Job.
+      enabled: false
+
+      # -- Container image for the syncer job.
+      image:
+        # -- Image repository.
+        repository: "ghcr.io/opstty/trino-superset-syncer"
+        # -- Image tag.
+        tag: "latest"
+        # -- Image pull policy.
+        pullPolicy: IfNotPresent
+
+      # -- Image pull secrets for private registries.
+      imagePullSecrets: []
+
+      # -- Name of the secret containing Trino credentials.
+      credentialsSecretName: ""
+
+      # -- Name of the secret containing the Superset admin password.
+      adminCredentialsSecretName: ""
+
+      # -- Key in adminCredentialsSecretName that holds the password.
+      adminCredentialsSecretKey: "SUPERSET_ADMIN_PASSWORD"
+
+      # -- Init container image for waiting on Superset readiness.
+      waitImage:
+        # -- Image repository for the wait container.
+        repository: "alpine/curl"
+        # -- Image tag for the wait container.
+        tag: "8.12.0"
