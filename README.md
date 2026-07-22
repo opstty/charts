@@ -1,12 +1,12 @@
 # opstty/charts
 
-Helm chart repository for [Apache Hive](https://hive.apache.org/) on Kubernetes, published to [Artifact Hub](https://artifacthub.io/).
+Helm chart repository for Kubernetes, published to [Artifact Hub](https://artifacthub.io/). All charts live under the [`opstty/`](./opstty/) directory.
 
 ## Charts
 
 | Chart | Description | Version | App Version |
 |-------|-------------|---------|-------------|
-| [hive](./hive/) | Apache Hive Metastore + HiveServer2 | 0.1.1 | 4.0.0 |
+| [hive](./opstty/hive/) | Apache Hive Metastore + HiveServer2 | 0.1.1 | 4.0.0 |
 
 ## Usage
 
@@ -32,7 +32,7 @@ helm install my-hive opstty/hive \
   --set metastore.database.external.existingSecret=hive-db-secret
 ```
 
-See [hive/README.md](./hive/README.md) for full configuration reference.
+See [hive/README.md](./opstty/hive/README.md) for full configuration reference.
 
 ## Prerequisites
 
@@ -44,20 +44,20 @@ See [hive/README.md](./hive/README.md) for full configuration reference.
 
 ```bash
 # Lint
-helm lint hive/
+helm lint opstty/hive/
 
 # Dry-run render
-helm template my-hive hive/
+helm template my-hive opstty/hive/
 
 # Render with custom values
-helm template my-hive hive/ -f my-values.yaml
+helm template my-hive opstty/hive/ -f my-values.yaml
 ```
 
 ## Release
 
 Push to `master` → GitHub Actions runs [chart-releaser](https://github.com/helm/chart-releaser-action), packages the chart, and publishes it to the `gh-pages` branch.
 
-> **Important**: bump `version` in `hive/Chart.yaml` before merging — chart-releaser will not re-release an already-published version.
+> **Important**: bump `version` in the chart's `Chart.yaml` (e.g. `opstty/hive/Chart.yaml`) before merging — chart-releaser will not re-release an already-published version.
 
 ## License
 

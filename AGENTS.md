@@ -5,12 +5,13 @@
 **Branch:** master
 
 ## OVERVIEW
-Helm chart repository for Apache Hive (Metastore + HiveServer2) on Kubernetes, published to Artifact Hub via chart-releaser CI. Single chart: `hive/`.
+Helm chart repository for Kubernetes, published to Artifact Hub via chart-releaser CI. All charts live under `opstty/`.
 
 ## STRUCTURE
 ```
 charts/
-├── hive/                # The only chart — Apache Hive 4.0.0 (see hive/AGENTS.md)
+├── opstty/              # All charts live here
+│   └── hive/            # Apache Hive 4.0.0 (see opstty/hive/AGENTS.md)
 ├── README.md            # Repo-level README (install quickstart, chart table)
 ├── artifacthub-repo.yml # Artifact Hub repository metadata
 └── .github/workflows/
@@ -20,10 +21,10 @@ charts/
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |------|----------|-------|
-| Chart logic / templates | `hive/templates/` | 12 templates + _helpers.tpl |
-| Default values / schema | `hive/values.yaml` | Heavily commented with `# --` docstrings |
-| Chart metadata | `hive/Chart.yaml` | version, appVersion, kubeVersion |
-| Artifact Hub listing | `hive/artifacthub-pkg.yml` | per-chart AH metadata |
+| Chart logic / templates | `opstty/hive/templates/` | 12 templates + _helpers.tpl |
+| Default values / schema | `opstty/hive/values.yaml` | Heavily commented with `# --` docstrings |
+| Chart metadata | `opstty/hive/Chart.yaml` | version, appVersion, kubeVersion |
+| Artifact Hub listing | `opstty/hive/artifacthub-pkg.yml` | per-chart AH metadata |
 | Release pipeline | `.github/workflows/release.yaml` | chart-releaser on master push |
 
 ## CODE MAP
@@ -57,20 +58,20 @@ No LSP available (YAML/Helm project). Key Helm named templates (defined in `_hel
 - **HiveServer2 is disabled by default** (`hiveserver2.enabled: false`) — this is intentional.
 
 ## UNIQUE STYLES
-- **Bitnami PostgreSQL subchart**: Metastore database is provisioned via the `bitnami/postgresql` subchart (`hive/charts/postgresql-18.8.0.tgz`). Uses `docker.io/bitnamilegacy/postgresql:16` (legacy Debian-based image).
+- **Bitnami PostgreSQL subchart**: Metastore database is provisioned via the `bitnami/postgresql` subchart (`opstty/hive/charts/postgresql-18.8.0.tgz`). Uses `docker.io/bitnamilegacy/postgresql:16` (legacy Debian-based image).
 - **Credential JCEKS**: Metastore uses a Hadoop credential provider (`hadoop.security.credential.provider.path: jceks://file/opt/hive/secrets/hive.jceks`) — credentials injected via init container from the Bitnami-generated secret `<release>-postgresql`.
 - **`artifacthub-pkg.yml`** lives inside each chart directory (not root) — Artifact Hub picks it up automatically.
 
 ## COMMANDS
 ```bash
 # Lint chart
-helm lint hive/
+helm lint opstty/hive/
 
 # Template render (dry-run)
-helm template my-hive hive/
+helm template my-hive opstty/hive/
 
 # Template with custom values
-helm template my-hive hive/ -f my-values.yaml
+helm template my-hive opstty/hive/ -f my-values.yaml
 
 # Install (published repo)
 helm repo add opstty https://opstty.github.io/charts

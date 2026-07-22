@@ -29,7 +29,7 @@ jobs:
         id: release
         uses: helm/chart-releaser-action@v1.7.0
         with:
-          charts_dir: .
+          charts_dir: opstty
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
