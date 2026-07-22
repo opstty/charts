@@ -19,13 +19,13 @@ helm repo update
 
 ```bash
 # Metastore only (default)
-helm install my-hive opstty/hive
+helm install hive opstty/hive
 
 # Metastore + HiveServer2
-helm install my-hive opstty/hive --set hiveserver2.enabled=true
+helm install hive opstty/hive --set hiveserver2.enabled=true
 
 # External PostgreSQL (no embedded subchart)
-helm install my-hive opstty/hive \
+helm install hive opstty/hive \
   --set metastore.database.enabled=false \
   --set metastore.database.external.host=my-postgres \
   --set metastore.database.external.user=hive \
@@ -47,10 +47,10 @@ See [hive/README.md](./opstty/hive/README.md) for full configuration reference.
 helm lint opstty/hive/
 
 # Dry-run render
-helm template my-hive opstty/hive/
+helm template hive opstty/hive/
 
 # Render with custom values
-helm template my-hive opstty/hive/ -f my-values.yaml
+helm template hive opstty/hive/ -f my-values.yaml
 ```
 
 ## Release
