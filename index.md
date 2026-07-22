@@ -13,7 +13,7 @@ helm repo update
 
 | Chart | Description | Version | App Version |
 |-------|-------------|---------|-------------|
-| [hive](https://github.com/opstty/charts/tree/master/opstty/hive) | Apache Hive Metastore + HiveServer2 | 0.1.3 | 4.0.0 |
+| [hive](charts/hive/) | Apache Hive Metastore + HiveServer2 | 0.1.3 | 4.0.0 |
 
 Click a chart name for full documentation and configuration reference.
 
