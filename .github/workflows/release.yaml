@@ -63,12 +63,29 @@ jobs:
         env:
           CHANGED_CHARTS: ${{ steps.release.outputs.changed_charts }}
 
-      - name: Update landing page versions
+      - name: Save chart READMEs from master
+        if: steps.release.outputs.changed_charts != ''
+        id: readmes
+        run: |
+          # Copy each changed chart's README.md to a temp dir before switching branches
+          mkdir -p /tmp/chart-readmes
+          for chart_dir in $CHANGED_CHARTS; do
+            chart_name=$(basename "$chart_dir")
+            if [ -f "$chart_dir/README.md" ]; then
+              cp "$chart_dir/README.md" "/tmp/chart-readmes/${chart_name}.md"
+              echo "Saved README for $chart_name"
+            fi
+          done
+        env:
+          CHANGED_CHARTS: ${{ steps.release.outputs.changed_charts }}
+
+      - name: Update gh-pages (versions + chart pages)
         if: steps.release.outputs.changed_charts != ''
         run: |
           git fetch origin gh-pages
           git checkout gh-pages
 
+          # --- Update version table in index.md ---
           python3 - <<'EOF'
           import re, json, os
 
@@ -94,15 +111,31 @@ jobs:
               f.write(content)
           EOF
 
-          if git diff --quiet; then
-            echo "No changes to index.md"
+          # --- Copy chart READMEs as dedicated pages ---
+          for readme in /tmp/chart-readmes/*.md; do
+            [ -f "$readme" ] || continue
+            chart_name=$(basename "$readme" .md)
+            mkdir -p "charts/${chart_name}"
+            {
+              echo "---"
+              echo "layout: default"
+              echo "title: ${chart_name}"
+              echo "---"
+              echo ""
+              cat "$readme"
+            } > "charts/${chart_name}/index.md"
+            echo "Published chart page: charts/${chart_name}/index.md"
+          done
+
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "No changes to gh-pages"
             exit 0
           fi
 
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          git add index.md
-          git commit -m "docs: update chart versions in landing page"
+          git add index.md charts/
+          git commit -m "docs: update chart versions and chart pages"
           git push origin gh-pages
         env:
           VERSIONS_JSON: ${{ steps.versions.outputs.versions_json }}
