@@ -1,6 +1,6 @@
 # opstty/charts
 
-Helm chart repository for [Apache Hive](https://hive.apache.org/) on Kubernetes.
+Helm chart repository for Kubernetes.
 
 ## Add the repository
 
@@ -13,30 +13,28 @@ helm repo update
 
 | Chart | Description | Version | App Version |
 |-------|-------------|---------|-------------|
-| [hive](https://github.com/opstty/charts/tree/master/hive) | Apache Hive Metastore + HiveServer2 | 0.1.3 | 4.0.0 |
+| [hive](https://github.com/opstty/charts/tree/master/opstty/hive) | Apache Hive Metastore + HiveServer2 | 0.1.3 | 4.0.0 |
 
-## Install Apache Hive
+Click a chart name for full documentation and configuration reference.
+
+## Install
 
 ```bash
-# Metastore only (default)
-helm install my-hive opstty/hive
-
-# Metastore + HiveServer2
-helm install my-hive opstty/hive --set hiveserver2.enabled=true
-
-# External PostgreSQL (no embedded subchart)
-helm install my-hive opstty/hive \
-  --set metastore.database.enabled=false \
-  --set metastore.database.external.host=my-postgres \
-  --set metastore.database.external.user=hive \
-  --set metastore.database.external.existingSecret=hive-db-secret
+helm install <release-name> opstty/<chart-name>
 ```
+
+For example:
+
+```bash
+helm install hive opstty/hive
+```
+
+See each chart's README for detailed configuration options.
 
 ## Prerequisites
 
 - Kubernetes 1.23+
 - Helm 3.x
-- PersistentVolume support in the cluster — required when `metastore.database.enabled=true` (the default, uses Bitnami PostgreSQL subchart)
 
 ## Source
 
