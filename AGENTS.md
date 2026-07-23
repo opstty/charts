@@ -11,7 +11,8 @@ Helm chart repository for Kubernetes, published to Artifact Hub via chart-releas
 ```
 charts/
 ├── opstty/              # All charts live here
-│   └── hive/            # Apache Hive 4.0.0 (see opstty/hive/AGENTS.md)
+│   ├── hive/            # Apache Hive 4.0.0 (see opstty/hive/AGENTS.md)
+│   └── trino/           # Trino 481 — wraps trinodb/trino subchart (password auth, cert, ingress, register-table, superset)
 ├── README.md            # Repo-level README (install quickstart, chart table)
 ├── artifacthub-repo.yml # Artifact Hub repository metadata
 └── .github/workflows/
@@ -25,6 +26,9 @@ charts/
 | Default values / schema | `opstty/hive/values.yaml` | Heavily commented with `# --` docstrings |
 | Chart metadata | `opstty/hive/Chart.yaml` | version, appVersion, kubeVersion |
 | Artifact Hub listing | `opstty/hive/artifacthub-pkg.yml` | per-chart AH metadata |
+| Trino templates | `opstty/trino/templates/` | coordinator cert, ingress, password-auth init, register-table job, superset syncer |
+| Trino values | `opstty/trino/values.yaml` | All operational knobs with `# --` docstrings |
+| Trino chart metadata | `opstty/trino/Chart.yaml` | wraps trinodb/trino + opstty/hive as dependencies |
 | Release pipeline | `.github/workflows/release.yaml` | chart-releaser on master push |
 
 ## CODE MAP
@@ -56,6 +60,8 @@ No LSP available (YAML/Helm project). Key Helm named templates (defined in `_hel
 - **DO NOT** skip the `{{- if .Values.<component>.enabled -}}` guard on new component templates.
 - **DO NOT** push directly to master without chart version bump in `Chart.yaml` — chart-releaser will re-release the same version.
 - **HiveServer2 is disabled by default** (`hiveserver2.enabled: false`) — this is intentional.
+- **DO NOT** configure the `trino` subchart (trinodb/trino) directly in `opstty/trino/templates/` — all Trino config goes through values passthrough (`trino.*` in values.yaml); operational resources (cert, ingress, jobs) live as separate templates.
+- **Trino's `hive` subchart dependency** (`hive.enabled: false` by default) references `opstty/hive` — it must be released before being usable as a dependency.
 
 ## UNIQUE STYLES
 - **Bitnami PostgreSQL subchart**: Metastore database is provisioned via the `bitnami/postgresql` subchart (`opstty/hive/charts/postgresql-18.8.0.tgz`). Uses `docker.io/bitnamilegacy/postgresql:16` (legacy Debian-based image).
