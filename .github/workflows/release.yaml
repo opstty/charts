@@ -25,6 +25,12 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v5
 
+      - name: Add Helm repositories
+        run: |
+          helm repo add trinodb https://trinodb.github.io/charts/
+          helm repo add opstty https://opstty.github.io/charts/
+          helm repo update
+
       - name: Run chart-releaser
         id: release
         uses: helm/chart-releaser-action@v1.7.0
