@@ -37,7 +37,7 @@ jobs:
         if: steps.release.outputs.changed_charts != ''
         id: versions
         run: |
-          # Build a JSON map { "chart_name": {"version": "x", "app_version": "y"} }
+          # Build a JSON map { "chart_name": {"version": "x", "app_version": "y", "description": "..."} }
           # while we're still on the master checkout (Chart.yaml files are present)
           python3 - <<'EOF'
           import re, json, os
@@ -54,7 +54,9 @@ jobs:
                   cy = f.read()
               version = re.search(r"^version:\s*(.+)$", cy, re.M).group(1).strip()
               app_version = re.search(r'^appVersion:\s*["\']?(.+?)["\']?\s*$', cy, re.M).group(1).strip()
-              result[chart_name] = {"version": version, "app_version": app_version}
+              desc_m = re.search(r'^description:\s*(.+)$', cy, re.M)
+              description = desc_m.group(1).strip() if desc_m else chart_name
+              result[chart_name] = {"version": version, "app_version": app_version, "description": description}
               print(f"Collected {chart_name}: {version} / {app_version}")
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
@@ -85,7 +87,7 @@ jobs:
           git fetch origin gh-pages
           git checkout gh-pages
 
-          # --- Update version table in index.md ---
+          # --- Update version table in index.md (upsert: update existing rows, insert new ones) ---
           python3 - <<'EOF'
           import re, json, os
 
@@ -97,6 +99,8 @@ jobs:
           for chart_name, info in versions.items():
               version = info["version"]
               app_version = info["app_version"]
+              description = info.get("description", chart_name)
+              # Try to update an existing row first
               # Matches: | [chart_name](any_url) | any description | OLD_VER | OLD_APP_VER |
               pattern = rf'(\|\s*\[{re.escape(chart_name)}\]\([^)]+\)\s*\|[^|]+\|)[^|]+(\|)[^|]+(\|)'
               replacement = rf'\g<1> {version} \g<2> {app_version} \g<3>'
@@ -105,7 +109,15 @@ jobs:
                   print(f"Updated {chart_name}: {version} / {app_version}")
                   content = new_content
               else:
-                  print(f"Warning: no table row found for {chart_name}")
+                  # Row doesn't exist yet — insert a new row at the end of the table
+                  table_end = re.search(r'(\|[^\n]+\|\n)(?!\|)', content)
+                  if table_end:
+                      insert_pos = table_end.end()
+                      new_row = f"| [{chart_name}](charts/{chart_name}/) | {description} | {version} | {app_version} |\n"
+                      content = content[:insert_pos] + new_row + content[insert_pos:]
+                      print(f"Inserted new row for {chart_name}: {version} / {app_version}")
+                  else:
+                      print(f"Warning: could not locate table end for {chart_name} — skipping insert")
 
           with open("index.md", "w") as f:
               f.write(content)
