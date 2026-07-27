@@ -48,36 +48,48 @@ trino:
 ```yaml
 passwordAuthentication:
   enabled: true
-  credentialsSecretName: my-trino-credentials
 
 trino:
+  passwordAuth:
+    credentialsSecretName: my-trino-credentials
+
   server:
     config:
       authenticationType: "PASSWORD"
+
   initContainers:
     coordinator:
       - name: password-authentication
-        image: ghcr.io/opstty/trino-password-authentication:latest
-        imagePullPolicy: IfNotPresent
+        image: '{{ .Values.passwordAuth.image.repository }}:{{ .Values.passwordAuth.image.tag }}'
+        imagePullPolicy: '{{ .Values.passwordAuth.image.pullPolicy }}'
         volumeMounts:
           - name: credentials-volume
             mountPath: /tmp/
           - name: encrypted-credentials-volume
             mountPath: /etc/trino/auth/password/
+
   coordinator:
     additionalVolumes:
       - name: encrypted-credentials-volume
         emptyDir: {}
       - name: credentials-volume
         secret:
-          secretName: my-trino-credentials
+          secretName: '{{ .Values.passwordAuth.credentialsSecretName }}'
           items:
-            - key: password.db
+            - key: '{{ .Values.passwordAuth.credentialsSecretKey }}'
               path: password.db
+      - name: certificates-volume
+        secret:
+          secretName: '{{ include "trino.fullname" . }}-coordinator-certificate-secret'
+          defaultMode: 420
     additionalVolumeMounts:
       - name: encrypted-credentials-volume
         mountPath: /etc/trino/auth/password/
+      - name: certificates-volume
+        mountPath: /etc/trino/certificate/
 ```
+
+The `trino.passwordAuth.*` values are available in template expressions within the subchart scope (the upstream chart runs `tpl` on `additionalVolumes` and `initContainers`), so the snippet above uses them directly without repeating the image or secret name.
 
 ### Enable TLS with cert-manager
 ```yaml
@@ -88,6 +100,8 @@ coordinatorCertificate:
     name: letsencrypt-prod
     kind: ClusterIssuer
 ```
+
+When `coordinatorCertificate.enabled: true`, the chart creates a cert-manager `Certificate` resource named `<release>-coordinator-certificate-secret`. Mount it on the coordinator as shown in the password authentication example above (`certificates-volume`).
 
 ### Enable Ingress
 **Note:** The Ingress template does not include a `tls:` block. TLS termination must be handled via Ingress controller annotations or an external mechanism.
@@ -142,7 +156,7 @@ These are the overrides pre-configured by this chart. Any value from the upstrea
 **Password Authentication**
 | Parameter | Description | Default |
 |---|---|---|
-| `passwordAuthentication.enabled` | Enable the password-authentication init container | `false` |
+| `passwordAuthentication.enabled` | Enable the password-authentication init container. When true, auto-configures the init container, credential volumes, and TLS certificate volume on the coordinator. | `false` |
 | `passwordAuthentication.image.repository` | Init container image repository | `ghcr.io/opstty/trino-password-authentication` |
 | `passwordAuthentication.image.tag` | Init container image tag | `latest` |
 | `passwordAuthentication.image.pullPolicy` | Image pull policy | `IfNotPresent` |

@@ -14,6 +14,7 @@ Then access the Trino UI at: http://localhost:8080
 {{- if .Values.coordinatorCertificate.enabled }}
 
   ✓ TLS certificate managed by cert-manager ({{ .Values.coordinatorCertificate.issuerRef.name }})
+    Secret: {{ include "trino.fullname" . }}-coordinator-certificate-secret
 {{- end }}
 {{- if .Values.hive.enabled }}
 
@@ -21,34 +22,9 @@ Then access the Trino UI at: http://localhost:8080
 {{- end }}
 {{- if .Values.passwordAuthentication.enabled }}
 
-  ✓ Password authentication init container enabled ({{ .Values.passwordAuthentication.image.repository }}:{{ .Values.passwordAuthentication.image.tag }})
-
-  Make sure your values include the following under the trino subchart:
-
-    trino:
-      initContainers:
-        coordinator:
-          - name: password-authentication
-            image: {{ .Values.passwordAuthentication.image.repository }}:{{ .Values.passwordAuthentication.image.tag }}
-            imagePullPolicy: {{ .Values.passwordAuthentication.image.pullPolicy }}
-            volumeMounts:
-              - name: credentials-volume
-                mountPath: /tmp/
-              - name: encrypted-credentials-volume
-                mountPath: /etc/trino/auth/password/
-      coordinator:
-        additionalVolumes:
-          - name: encrypted-credentials-volume
-            emptyDir: {}
-          - name: credentials-volume
-            secret:
-              secretName: {{ .Values.passwordAuthentication.credentialsSecretName | default "<your-secret-name>" }}
-              items:
-                - key: {{ .Values.passwordAuthentication.credentialsSecretKey }}
-                  path: password.db
-        additionalVolumeMounts:
-          - name: encrypted-credentials-volume
-            mountPath: /etc/trino/auth/password/
+  ✓ Password authentication enabled
+    Init container: {{ .Values.passwordAuthentication.image.repository }}:{{ .Values.passwordAuthentication.image.tag }}
+    Credentials secret: {{ .Values.trino.passwordAuth.credentialsSecretName | default "<not set — set trino.passwordAuth.credentialsSecretName>" }}
 {{- end }}
 {{- if .Values.registerTable.job.enabled }}
 

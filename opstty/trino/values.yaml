@@ -68,6 +68,20 @@ trino:
   # - name: MY_VAR
   #   value: "my-value"
 
+  # -- Password authentication subchart-scope configuration.
+  # Set credentialsSecretName to the Kubernetes Secret containing the JSON password map.
+  # Image settings mirror passwordAuthentication.image.* and can be overridden here.
+  passwordAuth:
+    # -- Name of the secret containing the JSON password map (key: password.db).
+    credentialsSecretName: ""
+    # -- Key in the credentials secret that holds the password JSON.
+    credentialsSecretKey: "password.db"
+    # -- Init container image for converting the password map to a bcrypt htpasswd file.
+    image:
+      repository: "ghcr.io/opstty/trino-password-authentication"
+      tag: "latest"
+      pullPolicy: IfNotPresent
+
   # -- Init containers for coordinator and worker pods.
   initContainers:
     # -- Init containers added to the coordinator pod.
@@ -92,14 +106,11 @@ trino:
     additionalVolumeMounts: []
 
 # ─── Password Authentication ─────────────────────────────────────────────────
-# -- Password authentication init container configuration.
-# Runs before the Trino coordinator to convert a JSON password map into a
-# bcrypt htpasswd file. To enable, set the trino subchart values as shown below.
-# The init container, volumes, and volume mounts must be added to the trino
-# subchart values (trino.initContainers.coordinator, trino.coordinator.additionalVolumes,
-# trino.coordinator.additionalVolumeMounts).
 passwordAuthentication:
   # -- Enable the password-authentication init container.
+  # When true, the init container, credential volumes, and TLS certificate volume
+  # are automatically configured on the coordinator. Set trino.passwordAuth.credentialsSecretName
+  # to the name of the secret containing the JSON password map.
   enabled: false
   # -- Container image for the password-authentication init container.
   image:
@@ -109,10 +120,6 @@ passwordAuthentication:
     tag: "latest"
     # -- Image pull policy.
     pullPolicy: IfNotPresent
-  # -- Name of the secret containing the JSON password map.
-  credentialsSecretName: ""
-  # -- Key in the credentials secret that holds the password JSON.
-  credentialsSecretKey: "password.db"
 
 # ─── Coordinator Certificate (cert-manager) ──────────────────────────────────
 coordinatorCertificate:
