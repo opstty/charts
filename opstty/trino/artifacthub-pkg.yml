@@ -1,4 +1,4 @@
-version: 0.2.1
+version: 0.2.2
 name: trino
 displayName: Trino
 createdAt: "2026-07-28T00:00:00Z"
@@ -29,4 +29,4 @@ keywords:
 annotations:
   artifacthub.io/changes: |
     - kind: fixed
-      description: Tune startup probe to prevent excessive pod restarts (timeout 2s→10s, period 2s→10s, initialDelay 10s→30s, failureThreshold 60→30)
+      description: Bump hive dependency to 0.1.4 for PostgreSQL JDBC driver fix

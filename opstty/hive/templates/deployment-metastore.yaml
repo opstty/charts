@@ -37,6 +37,8 @@ spec:
             name: {{ include "hive.fullname" . }}-metastore-site
         - name: credential-provider-volume
           emptyDir: {}
+        - name: postgres-jdbc-driver
+          emptyDir: {}
         {{- if .Values.metastore.extraVolumes }}
         {{- toYaml .Values.metastore.extraVolumes | nindent 8 }}
         {{- end }}
@@ -75,6 +77,19 @@ spec:
               hadoop credential create javax.jdo.option.ConnectionPassword \
                 -value ${HMS_DB_PASSWORD} \
                 -provider jceks://file/opt/hive/secrets/hive.jceks
+        - name: 03-download-postgres-driver
+          image: alpine/curl:8.12.0
+          volumeMounts:
+            - name: postgres-jdbc-driver
+              mountPath: /driver
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              JDBC_VERSION="42.7.5"
+              JDBC_URL="https://jdbc.postgresql.org/download/postgresql-${JDBC_VERSION}.jar"
+              echo "Downloading PostgreSQL JDBC driver v${JDBC_VERSION}..."
+              curl -fsSL -o /driver/postgresql.jar "${JDBC_URL}"
+              echo "Driver downloaded to /driver/postgresql.jar"
         {{- if .Values.metastore.initContainers }}
         {{- tpl (toYaml .Values.metastore.initContainers) . | nindent 8 }}
         {{- end }}
@@ -120,6 +135,9 @@ spec:
               subPath: metastore-site.xml
             - name: credential-provider-volume
               mountPath: /opt/hive/secrets
+            - name: postgres-jdbc-driver
+              mountPath: /opt/hive/lib/postgresql.jar
+              subPath: postgresql.jar
             {{- if .Values.metastore.extraVolumeMounts }}
             {{- toYaml .Values.metastore.extraVolumeMounts | nindent 12 }}
             {{- end }}
