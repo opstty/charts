@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-07-21T16:57:06Z
-**Commit:** ccfe228
+**Generated:** 2026-07-28T00:00:00Z
+**Commit:** 167375a
 **Branch:** master
 
 ## OVERVIEW
@@ -12,7 +12,7 @@ Helm chart repository for Kubernetes, published to Artifact Hub via chart-releas
 charts/
 ├── opstty/              # All charts live here
 │   ├── hive/            # Apache Hive 4.0.0 (see opstty/hive/AGENTS.md)
-│   └── trino/           # Trino 481 — wraps trinodb/trino subchart (password auth, cert, ingress, register-table, superset)
+│   └── trino/           # Trino 481 — wraps trinodb/trino 1.42.2 subchart (password auth, cert, ingress, register-table, superset)
 ├── README.md            # Repo-level README (install quickstart, chart table)
 ├── artifacthub-repo.yml # Artifact Hub repository metadata
 └── .github/workflows/
@@ -26,7 +26,7 @@ charts/
 | Default values / schema | `opstty/hive/values.yaml` | Heavily commented with `# --` docstrings |
 | Chart metadata | `opstty/hive/Chart.yaml` | version, appVersion, kubeVersion |
 | Artifact Hub listing | `opstty/hive/artifacthub-pkg.yml` | per-chart AH metadata |
-| Trino templates | `opstty/trino/templates/` | coordinator cert, ingress, password-auth init, register-table job, superset syncer |
+| Trino templates | `opstty/trino/templates/` | coordinator cert, ingress, password-auth (`passwordAuthentication`), register-table job, superset syncer (8 templates total) |
 | Trino values | `opstty/trino/values.yaml` | All operational knobs with `# --` docstrings |
 | Trino chart metadata | `opstty/trino/Chart.yaml` | wraps trinodb/trino + opstty/hive as dependencies |
 | Release pipeline | `.github/workflows/release.yaml` | chart-releaser on master push |

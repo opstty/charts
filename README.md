@@ -7,7 +7,7 @@ Helm chart repository for Kubernetes, published to [Artifact Hub](https://artifa
 | Chart | Description | Version | App Version |
 |-------|-------------|---------|-------------|
 | [hive](./opstty/hive/) | Apache Hive Metastore + HiveServer2 | 0.1.3 | 4.0.0 |
-| [trino](./opstty/trino/) | Trino query engine with password auth, table registration, and Superset integration | 0.1.0 | 481 |
+| [trino](./opstty/trino/) | Trino query engine with password auth, table registration, and Superset integration | 0.2.0 | 481 |
 
 ## Usage
 
@@ -35,6 +35,23 @@ helm install hive opstty/hive \
 
 See [hive/README.md](./opstty/hive/README.md) for full configuration reference.
 
+### Install Trino
+
+```bash
+# Standalone Trino
+helm install trino opstty/trino
+
+# Trino + co-deployed Hive Metastore
+helm install trino opstty/trino --set hive.enabled=true
+
+# Trino with password authentication
+helm install trino opstty/trino \
+  --set passwordAuthentication.enabled=true \
+  --set passwordAuthentication.credentialsSecretName=trino-credentials
+```
+
+See [trino/README.md](./opstty/trino/README.md) for full configuration reference.
+
 ## Prerequisites
 
 - Kubernetes 1.23+
@@ -46,12 +63,15 @@ See [hive/README.md](./opstty/hive/README.md) for full configuration reference.
 ```bash
 # Lint
 helm lint opstty/hive/
+helm lint opstty/trino/
 
 # Dry-run render
 helm template hive opstty/hive/
+helm template trino opstty/trino/
 
 # Render with custom values
 helm template hive opstty/hive/ -f my-values.yaml
+helm template trino opstty/trino/ -f my-values.yaml
 ```
 
 ## Release
