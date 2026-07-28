@@ -14,7 +14,7 @@ helm repo update
 | Chart | Description | Version | App Version |
 |-------|-------------|---------|-------------|
 | [hive](charts/hive/) | Apache Hive Metastore + HiveServer2 | 0.1.3 | 4.0.0 |
-| [trino](charts/trino/) | Trino query engine with password auth, table registration, and Superset integration | 0.1.1 | 481 |
+| [trino](charts/trino/) | Trino query engine with password auth, table registration, and Superset integration | 0.2.0 | 481 |
 
 Click a chart name for full documentation and configuration reference.
 
