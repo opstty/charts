@@ -1,0 +1,32 @@
+version: 0.2.0
+name: trino
+displayName: Trino
+createdAt: "2026-07-28T00:00:00Z"
+description: A Helm chart for Trino — wraps the official trinodb/trino subchart with operational templates for certificates, ingress, table registration, and Superset integration.
+logoURL: https://trino.io/assets/images/trino-og.png
+homeURL: https://trino.io
+readme: ""  # Artifact Hub reads README.md automatically
+install: |
+  ```bash
+  helm repo add opstty https://opstty.github.io/charts
+  helm install my-trino opstty/trino
+  ```
+links:
+  - name: Trino
+    url: https://trino.io
+  - name: GitHub
+    url: https://github.com/opstty/charts
+  - name: Upstream Chart
+    url: https://trinodb.github.io/charts/
+license: Apache-2.0
+maintainers:
+  - name: opstty
+keywords:
+  - trino
+  - sql
+  - query-engine
+  - data-lake
+annotations:
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial release
