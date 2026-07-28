@@ -92,7 +92,9 @@ jobs:
         if: steps.release.outputs.changed_charts != ''
         run: |
           git fetch origin gh-pages
+          git clean -fd
           git checkout gh-pages
+          git pull --rebase origin gh-pages
 
           # --- Update version table in index.md (upsert: update existing rows, insert new ones) ---
           python3 - <<'EOF'
@@ -146,14 +148,12 @@ jobs:
             echo "Published chart page: charts/${chart_name}/index.md"
           done
 
-          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+          git add index.md charts/
+          if git diff --cached --quiet; then
             echo "No changes to gh-pages"
             exit 0
           fi
 
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          git add index.md charts/
           git commit -m "docs: update chart versions and chart pages"
           git push origin gh-pages
         env:
