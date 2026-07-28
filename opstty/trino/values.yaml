@@ -91,6 +91,21 @@ trino:
 
   # -- Coordinator-specific settings.
   coordinator:
+    # -- Startup probe configuration for the coordinator pod.
+    # Increases the grace window from 2 minutes to ~5 minutes to accommodate
+    # JVM warmup and catalog loading, preventing excessive pod restarts.
+    startupProbe:
+      # -- Initial delay before the first probe (seconds). Gives JVM time to
+      # start before liveness checks begin.
+      initialDelaySeconds: 30
+      # -- How often (in seconds) to perform the probe.
+      periodSeconds: 10
+      # -- Timeout for each probe attempt (seconds).
+      timeoutSeconds: 10
+      # -- Number of failures before the pod is marked unhealthy.
+      failureThreshold: 30
+      # -- Required for success on startup probe (must be 1 for HTTP/TCP).
+      successThreshold: 1
     # -- Extra volumes attached to the coordinator pod.
     additionalVolumes: []
     # -- Extra volume mounts for the coordinator container.
@@ -100,6 +115,21 @@ trino:
 
   # -- Worker-specific settings.
   worker:
+    # -- Startup probe configuration for worker pods.
+    # Increases the grace window from 2 minutes to ~5 minutes to accommodate
+    # JVM warmup and catalog loading, preventing excessive pod restarts.
+    startupProbe:
+      # -- Initial delay before the first probe (seconds). Gives JVM time to
+      # start before liveness checks begin.
+      initialDelaySeconds: 30
+      # -- How often (in seconds) to perform the probe.
+      periodSeconds: 10
+      # -- Timeout for each probe attempt (seconds).
+      timeoutSeconds: 10
+      # -- Number of failures before the pod is marked unhealthy.
+      failureThreshold: 30
+      # -- Required for success on startup probe (must be 1 for HTTP/TCP).
+      successThreshold: 1
     # -- Extra volumes attached to worker pods.
     additionalVolumes: []
     # -- Extra volume mounts for worker containers.
