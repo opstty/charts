@@ -93,6 +93,7 @@ jobs:
         run: |
           git fetch origin gh-pages
           git clean -fd
+          git checkout -- .
           git checkout gh-pages
           git pull --rebase origin gh-pages
 
