@@ -66,6 +66,34 @@ entries:
   trino:
   - apiVersion: v2
     appVersion: "481"
+    created: "2026-07-28T05:43:05.038520944Z"
+    dependencies:
+    - name: trino
+      repository: https://trinodb.github.io/charts/
+      version: 1.42.2
+    - condition: hive.enabled
+      name: hive
+      repository: https://opstty.github.io/charts/
+      version: 0.1.x
+    description: A Helm chart for Trino — wraps the official trinodb/trino subchart
+      with operational templates for certificates, ingress, table registration, and
+      Superset integration.
+    digest: 6c4301152a86f4010b662865d5e33d1cdb647b10ed5a1824af0b096e825125c0
+    home: https://trino.io
+    icon: https://trino.io/assets/images/trino-og.png
+    keywords:
+    - trino
+    - sql
+    - query-engine
+    - data-lake
+    kubeVersion: '>=1.23.0'
+    name: trino
+    type: application
+    urls:
+    - https://github.com/opstty/charts/releases/download/trino-0.2.0/trino-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: "481"
     created: "2026-07-27T10:42:17.133958863Z"
     dependencies:
     - name: trino
@@ -120,4 +148,4 @@ entries:
     urls:
     - https://github.com/opstty/charts/releases/download/trino-0.1.0/trino-0.1.0.tgz
     version: 0.1.0
-generated: "2026-07-27T10:42:17.133975197Z"
+generated: "2026-07-28T05:43:05.038544018Z"
