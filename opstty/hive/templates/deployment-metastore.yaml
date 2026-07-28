@@ -108,12 +108,18 @@ spec:
               value: {{ include "hive.pgPort" . | quote }}
             - name: HMS_DB_USER
               value: {{ include "hive.pgUser" . | quote }}
+            - name: HMS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hive.pgSecretName" . }}
+                  key: {{ include "hive.pgSecretPasswordKey" . }}
             - name: SERVICE_OPTS
               value: >
                 -Xmx2G
                 -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
                 -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://{{ include "hive.pgHost" . }}:{{ include "hive.pgPort" . }}/{{ include "hive.pgDatabase" . }}
                 -Djavax.jdo.option.ConnectionUserName={{ include "hive.pgUser" . }}
+                -Djavax.jdo.option.ConnectionPassword=$(HMS_DB_PASSWORD)
             {{- $envYaml := include "hive.mergeEnv" (dict "defaultEnv" .Values.env "specificEnv" .Values.metastore.env) -}}
             {{- if $envYaml }}
             {{- $envYaml | nindent 12 }}
