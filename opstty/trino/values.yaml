@@ -56,7 +56,8 @@ trino:
   #   hive.metastore.uri=thrift://hive-metastore:9083
 
   # -- Additional config.properties entries.
-  additionalConfigProperties: []
+  additionalConfigProperties:
+    - "announcer.http-client.request-timeout=10s"
 
   # -- envFrom for all Trino pods (secrets/configmaps).
   envFrom: []
