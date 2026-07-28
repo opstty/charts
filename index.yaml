@@ -3,6 +3,30 @@ entries:
   hive:
   - apiVersion: v2
     appVersion: 4.0.0
+    created: "2026-07-28T13:48:35.303126806Z"
+    dependencies:
+    - condition: metastore.database.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 18.8.0
+    description: A Helm chart for Apache Hive (Metastore + HiveServer2) deployment.
+    digest: 0a0f448c3d10e5aa6bfb68e94d7cf9dd3099c285f0d0a1b2ac7797389237da8f
+    home: https://hive.apache.org
+    icon: https://hive.apache.org/images/hive.svg
+    keywords:
+    - apache
+    - hive
+    - hiveserver2
+    - metastore
+    - data-warehouse
+    kubeVersion: '>=1.23.0'
+    name: hive
+    type: application
+    urls:
+    - https://github.com/opstty/charts/releases/download/hive-0.1.6/hive-0.1.6.tgz
+    version: 0.1.6
+  - apiVersion: v2
+    appVersion: 4.0.0
     created: "2026-07-28T13:22:51.007273908Z"
     dependencies:
     - condition: metastore.database.enabled
@@ -336,4 +360,4 @@ entries:
     urls:
     - https://github.com/opstty/charts/releases/download/trino-0.1.0/trino-0.1.0.tgz
     version: 0.1.0
-generated: "2026-07-28T13:43:56.9392846Z"
+generated: "2026-07-28T13:48:35.303166155Z"
