@@ -3,6 +3,30 @@ entries:
   hive:
   - apiVersion: v2
     appVersion: 4.0.0
+    created: "2026-07-28T11:53:20.321924106Z"
+    dependencies:
+    - condition: metastore.database.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 18.8.0
+    description: A Helm chart for Apache Hive (Metastore + HiveServer2) deployment.
+    digest: 44e72e293dc81896cdafc59ffb508e22a5c056660b096ccc7eb26a91c2784fb7
+    home: https://hive.apache.org
+    icon: https://hive.apache.org/images/hive.svg
+    keywords:
+    - apache
+    - hive
+    - hiveserver2
+    - metastore
+    - data-warehouse
+    kubeVersion: '>=1.23.0'
+    name: hive
+    type: application
+    urls:
+    - https://github.com/opstty/charts/releases/download/hive-0.1.4/hive-0.1.4.tgz
+    version: 0.1.4
+  - apiVersion: v2
+    appVersion: 4.0.0
     created: "2026-07-21T16:58:01.928673892Z"
     dependencies:
     - condition: metastore.database.enabled
@@ -64,6 +88,34 @@ entries:
     - https://github.com/opstty/charts/releases/download/hive-0.1.1/hive-0.1.1.tgz
     version: 0.1.1
   trino:
+  - apiVersion: v2
+    appVersion: "481"
+    created: "2026-07-28T11:53:20.472682373Z"
+    dependencies:
+    - name: trino
+      repository: https://trinodb.github.io/charts/
+      version: 1.42.2
+    - condition: hive.enabled
+      name: hive
+      repository: https://opstty.github.io/charts/
+      version: 0.1.x
+    description: A Helm chart for Trino — wraps the official trinodb/trino subchart
+      with operational templates for certificates, ingress, table registration, and
+      Superset integration.
+    digest: 1e341bd66f5ec7f069fbc6a091fb4b1a013c2ec9b57791a5e4532421f57da956
+    home: https://trino.io
+    icon: https://trino.io/assets/images/trino-og.png
+    keywords:
+    - trino
+    - sql
+    - query-engine
+    - data-lake
+    kubeVersion: '>=1.23.0'
+    name: trino
+    type: application
+    urls:
+    - https://github.com/opstty/charts/releases/download/trino-0.2.2/trino-0.2.2.tgz
+    version: 0.2.2
   - apiVersion: v2
     appVersion: "481"
     created: "2026-07-28T09:50:23.653074004Z"
@@ -176,4 +228,4 @@ entries:
     urls:
     - https://github.com/opstty/charts/releases/download/trino-0.1.0/trino-0.1.0.tgz
     version: 0.1.0
-generated: "2026-07-28T09:50:23.653097168Z"
+generated: "2026-07-28T11:53:20.472721981Z"
