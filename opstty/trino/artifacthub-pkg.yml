@@ -1,4 +1,4 @@
-version: 0.2.0
+version: 0.2.1
 name: trino
 displayName: Trino
 createdAt: "2026-07-28T00:00:00Z"
@@ -28,5 +28,5 @@ keywords:
   - data-lake
 annotations:
   artifacthub.io/changes: |
-    - kind: added
-      description: Initial release
+    - kind: fixed
+      description: Tune startup probe to prevent excessive pod restarts (timeout 2s→10s, period 2s→10s, initialDelay 10s→30s, failureThreshold 60→30)
