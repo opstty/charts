@@ -20,6 +20,21 @@ hive:
   # -- Enable to co-deploy the Hive Metastore from the sibling chart.
   enabled: false
 
+  # -- ExternalSecret configuration to sync Hive PostgreSQL password from Vault.
+  externalSecret:
+    # -- Enable the ExternalSecret resource for the Hive PostgreSQL password.
+    enabled: false
+    # -- Target Kubernetes Secret name (created by ESO).
+    secretName: ""
+    # -- Vault KV path (relative to the store's root path).
+    remoteKey: ""
+    # -- Property within the Vault secret that holds the database password.
+    remoteProperty: "database.password"
+    # -- ClusterSecretStore name to use.
+    storeRef: "vault-kv"
+    # -- How often ESO re-syncs the secret from Vault.
+    refreshInterval: "1h"
+
 # ─── Official Trino Subchart ─────────────────────────────────────────────────
 # -- Values passed through to the official trinodb/trino subchart.
 # Only commonly-used overrides are listed below. The upstream chart supports
