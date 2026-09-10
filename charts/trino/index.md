@@ -165,8 +165,8 @@ These are the overrides pre-configured by this chart. Any value from the upstrea
 | `passwordAuthentication.image.repository` | Init container image repository | `ghcr.io/opstty/trino-password-authentication` |
 | `passwordAuthentication.image.tag` | Init container image tag | `latest` |
 | `passwordAuthentication.image.pullPolicy` | Image pull policy | `IfNotPresent` |
-| `passwordAuthentication.credentialsSecretName` | Secret containing the JSON password map | `""` |
-| `passwordAuthentication.credentialsSecretKey` | Key in the secret that holds the password JSON | `password.db` |
+| `trino.passwordAuth.credentialsSecretName` | Secret containing the JSON password map | `""` |
+| `trino.passwordAuth.credentialsSecretKey` | Key in the secret that holds the password JSON | `password.db` |
 
 **Coordinator Certificate**
 | Parameter | Description | Default |
@@ -235,11 +235,11 @@ The `registerTable.job.enabled` and `registerTable.configmap.enabled` flags are 
 See [opstty/hive README](../hive/README.md) for all Hive configuration options.
 
 ## Subchart Configuration
-This chart wraps the official [trinodb/trino](https://trinodb.github.io/charts/) chart (v1.42.1, as pinned in `Chart.lock`) as a subchart. Only the most commonly-used overrides are listed in the Parameters section above — the upstream chart supports many more options including workers, autoscaling, KEDA, JVM tuning, probes, resource limits, security contexts, service configuration, native ingress, Gateway API, JMX metrics, Prometheus ServiceMonitor, and network policies.
+This chart wraps the official [trinodb/trino](https://trinodb.github.io/charts/) chart (v1.42.2, as pinned in `Chart.lock`) as a subchart. Only the most commonly-used overrides are listed in the Parameters section above — the upstream chart supports many more options including workers, autoscaling, KEDA, JVM tuning, probes, resource limits, security contexts, service configuration, native ingress, Gateway API, JMX metrics, Prometheus ServiceMonitor, and network policies.
 
 **To see all available upstream values:**
 ```bash
-helm show values trinodb/trino --version 1.42.1
+helm show values trinodb/trino --version 1.42.2
 ```
 
 Any key from the upstream chart can be set under the `trino:` key in your values file. For example:
