@@ -13,12 +13,18 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  backoffLimit: {{ .Values.superset.syncer.job.backoffLimit | default 3 }}
+  activeDeadlineSeconds: {{ .Values.superset.syncer.job.activeDeadlineSeconds | default 600 }}
+  ttlSecondsAfterFinished: {{ .Values.superset.syncer.job.ttlSecondsAfterFinished | default 3600 }}
   template:
     metadata:
       labels:
         {{- include "trino.selectorLabels" . | nindent 8 }}
     spec:
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
       {{- with .Values.superset.syncer.job.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -26,6 +32,11 @@ spec:
       initContainers:
         - name: wait-for-superset
           image: "{{ .Values.superset.syncer.job.waitImage.repository }}:{{ .Values.superset.syncer.job.waitImage.tag }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: SUPERSET_URL
               value: {{ .Values.superset.url | quote }}
@@ -33,15 +44,27 @@ spec:
             - 'sh'
             - '-c'
             - |
+              TIMEOUT=300
+              ELAPSED=0
               until curl -sfk "$SUPERSET_URL/health"; do
-                echo "Waiting for superset at $SUPERSET_URL/health..."
+                echo "Waiting for Superset at $SUPERSET_URL/health..."
                 sleep 3
+                ELAPSED=$((ELAPSED + 3))
+                if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
+                  echo "Timed out waiting for Superset after ${TIMEOUT}s"
+                  exit 1
+                fi
               done
               echo "Superset is ready!"
       containers:
         - name: syncer
           image: "{{ .Values.superset.syncer.job.image.repository }}:{{ .Values.superset.syncer.job.image.tag }}"
           imagePullPolicy: {{ .Values.superset.syncer.job.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: SUPERSET_URL
               value: {{ .Values.superset.url | quote }}
@@ -52,9 +75,13 @@ spec:
                   key: {{ .Values.superset.syncer.job.adminCredentialsSecretKey | quote }}
             - name: TRINO_HOST
               value: "{{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}"
+          {{- with .Values.superset.syncer.job.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: credentials-volume
-              mountPath: /tmp/
+              mountPath: /etc/trino/credentials/
             - name: access-control-volume
               mountPath: /etc/trino/access-control
             - name: superset-roles-volume
@@ -65,7 +92,7 @@ spec:
             secretName: {{ .Values.superset.syncer.job.credentialsSecretName | quote }}
         - name: access-control-volume
           configMap:
-            name: {{ include "trino.fullname" . }}-trino-access-control-volume-coordinator
+            name: {{ .Values.superset.syncer.job.accessControlConfigMapName | default (printf "%s-trino-access-control-volume-coordinator" (include "trino.fullname" .)) }}
         - name: superset-roles-volume
           configMap:
             name: {{ include "trino.fullname" . }}-superset-roles-configmap

@@ -7,10 +7,13 @@ metadata:
   labels:
     {{- include "hive.labels" . | nindent 4 }}
     app.kubernetes.io/component: metastore
-  {{- with .Values.metastore.service.annotations }}
   annotations:
+    {{- with .Values.commonAnnotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    {{- with .Values.metastore.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   type: {{ .Values.metastore.service.type }}
   ports:

@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "hive": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "externalSecret": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "secretName": { "type": "string" },
+            "storeRef": { "type": "string" },
+            "remoteKey": { "type": "string" },
+            "remoteProperty": { "type": "string" }
+          }
+        }
+      }
+    },
+    "trino": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "type": "object",
+          "properties": {
+            "workers": { "type": "integer", "minimum": 0 },
+            "config": {
+              "type": "object",
+              "properties": {
+                "authenticationType": { "type": "string" },
+                "https": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "passwordAuth": {
+          "type": "object",
+          "properties": {
+            "credentialsSecretName": { "type": "string" },
+            "credentialsSecretKey": { "type": "string" },
+            "image": {
+              "type": "object",
+              "properties": {
+                "repository": { "type": "string" },
+                "tag": { "type": "string" },
+                "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "passwordAuthentication": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "coordinatorCertificate": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "host": { "type": "string" },
+        "issuer": { "type": "string" },
+        "secretName": { "type": "string" },
+        "duration": { "type": "string" },
+        "renewBefore": { "type": "string" }
+      }
+    },
+    "coordinatorIngress": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "host": { "type": "string" },
+        "port": { "type": "integer" },
+        "className": { "type": "string" },
+        "tls": { "type": "array" }
+      }
+    },
+    "registerTable": {
+      "type": "object",
+      "properties": {
+        "job": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "backoffLimit": { "type": "integer", "minimum": 0 },
+            "activeDeadlineSeconds": { "type": "integer", "minimum": 1 },
+            "ttlSecondsAfterFinished": { "type": "integer", "minimum": 0 },
+            "credentialsSecretName": { "type": "string" },
+            "credentialsSecretKey": { "type": "string" },
+            "image": {
+              "type": "object",
+              "properties": {
+                "repository": { "type": "string" },
+                "tag": { "type": "string" },
+                "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+              }
+            },
+            "resources": { "type": "object" }
+          }
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": { "type": "boolean" },
+        "name": { "type": "string" }
+      }
+    },
+    "commonAnnotations": { "type": "object" },
+    "commonLabels": { "type": "object" }
+  }
+}

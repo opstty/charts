@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'opstty/**'
+      - '.github/workflows/release.yaml'
 
 permissions:
   contents: write
@@ -13,17 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Configure Git
         run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Install Helm
-        uses: azure/setup-helm@v5
+        uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
 
       - name: Add Helm repositories
         run: |
@@ -31,9 +34,17 @@ jobs:
           helm repo add opstty https://opstty.github.io/charts/
           helm repo update
 
+      - name: Lint charts
+        run: |
+          for chart in opstty/*/; do
+            if [ -f "$chart/Chart.yaml" ]; then
+              helm lint "$chart"
+            fi
+          done
+
       - name: Run chart-releaser
         id: release
-        uses: helm/chart-releaser-action@v1.7.0
+        uses: helm/chart-releaser-action@cad2fbb74f3a4e2564a61291580158e83e2e0a41 # v1.7.0
         with:
           charts_dir: opstty
           skip_existing: true
@@ -59,8 +70,15 @@ jobs:
                   continue
               with open(chart_yaml_path) as f:
                   cy = f.read()
-              version = re.search(r"^version:\s*(.+)$", cy, re.M).group(1).strip()
-              app_version = re.search(r'^appVersion:\s*["\']?(.+?)["\']?\s*$', cy, re.M).group(1).strip()
+              name_m = re.search(r"^name:\s*(.+)$", cy, re.M)
+              version_m = re.search(r"^version:\s*(.+)$", cy, re.M)
+              if not name_m or not version_m:
+                  print(f"Warning: Could not parse name/version from {chart_yaml_path}")
+                  continue
+              name = name_m.group(1).strip()
+              version = version_m.group(1).strip()
+              app_version_m = re.search(r'^appVersion:\s*["\x27]?(.+?)["\x27]?\s*$', cy, re.M)
+              app_version = app_version_m.group(1).strip() if app_version_m else ""
               desc_m = re.search(r'^description:\s*(.+)$', cy, re.M)
               description = desc_m.group(1).strip() if desc_m else chart_name
               result[chart_name] = {"version": version, "app_version": app_version, "description": description}

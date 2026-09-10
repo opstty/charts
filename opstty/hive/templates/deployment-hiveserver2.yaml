@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "hive.selectorLabels" . | nindent 8 }}
+        {{- include "hive.labels" . | nindent 8 }}
         app.kubernetes.io/component: hiveserver2
     spec:
       {{- if (.Values.hiveserver2.imagePullSecrets | default .Values.imagePullSecrets) }}
@@ -28,19 +28,50 @@ spec:
         {{- toYaml (.Values.hiveserver2.imagePullSecrets | default .Values.imagePullSecrets) | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "hive.serviceAccountName" . }}
+      {{- with .Values.hiveserver2.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       volumes:
         - name: hive-site-config
           configMap:
             name: {{ include "hive.fullname" . }}-hive-site
         - name: credential-provider-volume
-          emptyDir: {}
+          emptyDir:
+            medium: Memory
         {{- if .Values.hiveserver2.extraVolumes }}
         {{- toYaml .Values.hiveserver2.extraVolumes | nindent 8 }}
         {{- end }}
+      initContainers:
+        - name: 02-setup-credential-provider
+          image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.hiveserver2.image "chart" .Chart) }}
+          {{- with .Values.hiveserver2.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: HMS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hive.pgSecretName" . }}
+                  key: {{ include "hive.pgSecretPasswordKey" . }}
+          volumeMounts:
+            - name: credential-provider-volume
+              mountPath: /opt/hive/secrets
+          command:
+            - sh
+            - -c
+            - |
+              echo "${HMS_DB_PASSWORD}" | hadoop credential create javax.jdo.option.ConnectionPassword \
+                -provider jceks://file/opt/hive/secrets/hive.jceks
       containers:
         - name: hiveserver2
           image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.hiveserver2.image "chart" .Chart) }}
           imagePullPolicy: {{ .Values.hiveserver2.image.pullPolicy | default .Values.image.pullPolicy }}
+          {{- with .Values.hiveserver2.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             - name: SERVICE_NAME
               value: hiveserver2

@@ -13,6 +13,12 @@ metadata:
 spec:
   secretName: {{ include "trino.fullname" . }}-coordinator-certificate-secret
   commonName: {{ include "trino.fullname" . }}-coordinator-certificate
+  {{- with .Values.coordinatorCertificate.duration }}
+  duration: {{ . }}
+  {{- end }}
+  {{- with .Values.coordinatorCertificate.renewBefore }}
+  renewBefore: {{ . }}
+  {{- end }}
   additionalOutputFormats:
     - type: CombinedPEM
   dnsNames:

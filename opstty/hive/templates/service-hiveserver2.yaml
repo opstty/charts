@@ -7,10 +7,13 @@ metadata:
   labels:
     {{- include "hive.labels" . | nindent 4 }}
     app.kubernetes.io/component: hiveserver2
-  {{- with .Values.hiveserver2.service.annotations }}
   annotations:
+    {{- with .Values.commonAnnotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    {{- with .Values.hiveserver2.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   type: {{ .Values.hiveserver2.service.type }}
   ports:

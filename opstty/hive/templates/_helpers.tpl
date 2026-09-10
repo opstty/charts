@@ -17,8 +17,8 @@ If release name contains chart name it will be used as a full name.
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if hasPrefix .Release.Name $name }}
-{{- $name | trunc 63 | trimSuffix "-" }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
@@ -108,7 +108,7 @@ Usage: {{ include "hive.componentImage" (dict "global" .Values.image "component"
   "pullPolicy"  ($comp.pullPolicy  | default $global.pullPolicy)
   "tag"         ($comp.tag         | default $global.tag)
   "digest"      ($comp.digest      | default $global.digest)
-  "useRepositoryAsSoleImageReference" ($global.useRepositoryAsSoleImageReference)
+  "useRepositoryAsSoleImageReference" (or $comp.useRepositoryAsSoleImageReference $global.useRepositoryAsSoleImageReference)
 -}}
 {{- include "hive.image" (dict "image" $resolved "chart" $chart) -}}
 {{- end }}
@@ -132,7 +132,9 @@ Usage: {{ include "hive.mergeEnv" (dict "defaultEnv" .Values.env "specificEnv" .
 {{- end -}}
 {{- if $envMap -}}
   {{- $mergedList := list -}}
-  {{- range $name, $value := $envMap -}}
+  {{- $sortedKeys := keys $envMap | sortAlpha -}}
+  {{- range $name := $sortedKeys -}}
+    {{- $value := index $envMap $name -}}
     {{- $mergedList = append $mergedList $value -}}
   {{- end -}}
   {{- toYaml $mergedList -}}

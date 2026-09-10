@@ -30,7 +30,8 @@ hive:
     remoteKey: ""
     # -- Property within the Vault secret that holds the database password.
     remoteProperty: "database.password"
-    # -- ClusterSecretStore name to use.
+    # -- ClusterSecretStore name for ESO. Change this to match your secrets backend
+    # (e.g., "aws-secrets-manager", "gcp-secret-manager").
     storeRef: "vault-kv"
     # -- How often ESO re-syncs the secret from Vault.
     refreshInterval: "1h"
@@ -54,10 +55,12 @@ trino:
   server:
     config:
       # -- Authentication type (PASSWORD, OAUTH2, CERTIFICATE, etc.).
-      authenticationType: "PASSWORD"
+      # Left empty by default to use the subchart's default. Set to "PASSWORD"
+      # when password authentication is enabled.
+      authenticationType: ""
       https:
         # -- Enable HTTPS on the coordinator.
-        enabled: false
+        enabled: true
     # -- Extra config lines appended to coordinator config.properties.
     coordinatorExtraConfig: ""
 
@@ -84,9 +87,8 @@ trino:
   # - name: MY_VAR
   #   value: "my-value"
 
-  # -- Password authentication subchart-scope configuration.
+  # -- Password authentication configuration.
   # Set credentialsSecretName to the Kubernetes Secret containing the JSON password map.
-  # Image settings mirror passwordAuthentication.image.* and can be overridden here.
   passwordAuth:
     # -- Name of the secret containing the JSON password map (key: password.db).
     credentialsSecretName: ""
@@ -95,7 +97,7 @@ trino:
     # -- Init container image for converting the password map to a bcrypt htpasswd file.
     image:
       repository: "ghcr.io/opstty/trino-password-authentication"
-      tag: "latest"
+      tag: "0.1.0"
       pullPolicy: IfNotPresent
 
   # -- Init containers for coordinator and worker pods.
@@ -157,15 +159,8 @@ passwordAuthentication:
   # When true, the init container, credential volumes, and TLS certificate volume
   # are automatically configured on the coordinator. Set trino.passwordAuth.credentialsSecretName
   # to the name of the secret containing the JSON password map.
+  # Image settings are configured under trino.passwordAuth.image.
   enabled: false
-  # -- Container image for the password-authentication init container.
-  image:
-    # -- Image repository.
-    repository: "ghcr.io/opstty/trino-password-authentication"
-    # -- Image tag.
-    tag: "latest"
-    # -- Image pull policy.
-    pullPolicy: IfNotPresent
 
 # ─── Coordinator Certificate (cert-manager) ──────────────────────────────────
 coordinatorCertificate:
@@ -174,6 +169,11 @@ coordinatorCertificate:
 
   # -- Primary DNS host for the certificate.
   host: ""
+
+  # -- Certificate validity duration (e.g., "2160h" for 90 days).
+  duration: ""
+  # -- Time before expiry to renew the certificate (e.g., "360h" for 15 days).
+  renewBefore: ""
 
   # -- cert-manager issuer reference.
   issuerRef:
@@ -211,6 +211,13 @@ coordinatorIngress:
   # -- Annotations to add to the Ingress resource.
   annotations: {}
 
+  # -- TLS configuration for the Ingress.
+  # Example:
+  #   - secretName: trino-tls
+  #     hosts:
+  #       - trino.example.com
+  tls: []
+
 # ─── Register Table Job ──────────────────────────────────────────────────────
 registerTable:
   job:
@@ -222,7 +229,7 @@ registerTable:
       # -- Image repository.
       repository: "ghcr.io/opstty/trino-register-table"
       # -- Image tag.
-      tag: "latest"
+      tag: "0.1.0"
       # -- Image pull policy.
       pullPolicy: IfNotPresent
 
@@ -232,14 +239,27 @@ registerTable:
     # -- SSL certificate path mounted in the container.
     sslCertPath: "/etc/trino/certificate-authority/root.ca"
 
-    # -- Name of the secret containing Trino credentials (must contain key password.db).
+    # -- Name of the secret containing Trino credentials.
     credentialsSecretName: ""
+
+    # -- Key in the credentials Secret that holds the Trino password.
+    credentialsSecretKey: "password.db"
 
     # -- Name of the secret containing the certificate authority cert.
     certificateAuthoritySecretName: ""
 
     # -- Name of the secret containing extra environment variables.
     environmentSecretName: ""
+
+    # -- Maximum retries before marking the Job as failed.
+    backoffLimit: 3
+    # -- Maximum time (seconds) the Job can run before being terminated.
+    activeDeadlineSeconds: 600
+    # -- Time (seconds) after completion before the Job is cleaned up.
+    ttlSecondsAfterFinished: 3600
+
+    # -- Resource requests and limits for the job container.
+    resources: {}
 
     # -- Postgres connection configuration for register-table.
     postgres:
@@ -284,7 +304,7 @@ superset:
         # -- Image repository.
         repository: "ghcr.io/opstty/trino-superset-syncer"
         # -- Image tag.
-        tag: "latest"
+        tag: "0.1.0"
         # -- Image pull policy.
         pullPolicy: IfNotPresent
 
@@ -299,6 +319,19 @@ superset:
 
       # -- Key in adminCredentialsSecretName that holds the password.
       adminCredentialsSecretKey: "SUPERSET_ADMIN_PASSWORD"
+
+      # -- Name of the access control ConfigMap from the Trino subchart.
+      accessControlConfigMapName: ""
+
+      # -- Maximum retries before marking the Job as failed.
+      backoffLimit: 3
+      # -- Maximum time (seconds) the Job can run before being terminated.
+      activeDeadlineSeconds: 600
+      # -- Time (seconds) after completion before the Job is cleaned up.
+      ttlSecondsAfterFinished: 3600
+
+      # -- Resource requests and limits for the job container.
+      resources: {}
 
       # -- Init container image for waiting on Superset readiness.
       waitImage:

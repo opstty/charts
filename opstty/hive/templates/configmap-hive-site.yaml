@@ -12,5 +12,6 @@ metadata:
   {{- end }}
 data:
   hive-site.xml: |
-    {{- include "hive.hiveSiteXml" (dict "default" .Values.hiveSite.properties "override" .Values.hiveserver2.hiveSite.properties) | nindent 4 }}
+    {{- $merged := merge (dict) (.Values.metastore.hiveSite.properties | default dict) (.Values.hiveserver2.hiveSite.properties | default dict) }}
+    {{- include "hive.hiveSiteXml" (dict "default" .Values.hiveSite.properties "override" $merged) | nindent 4 }}
 {{- end -}}

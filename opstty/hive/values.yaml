@@ -41,7 +41,7 @@ envFrom: []
 # -- Global hive-site.xml properties (merged with component-specific overrides).
 hiveSite:
   properties:
-    hive.server2.enable.doAs: "true"
+    hive.server2.enable.doAs: "false"
     hive.tez.exec.inplace.progress: "false"
     hive.tez.exec.print.summary: "true"
     hive.exec.scratchdir: "/opt/hive/scratch_dir"
@@ -52,9 +52,7 @@ hiveSite:
     tez.local.mode: "true"
     hive.execution.engine: "tez"
     hive.metastore.warehouse.dir: "/opt/hive/data/warehouse"
-    metastore.metastore.event.db.notification.api.auth: "false"
-    hive.server2.thrift.bind.host: "0.0.0.0"
-    hive.server2.webui.host: "0.0.0.0"
+    metastore.metastore.event.db.notification.api.auth: "true"
     datanucleus.autoCreateSchema: "false"
     datanucleus.fixedDatastore: "true"
     datanucleus.autoStartMechanism: "SchemaTable"
@@ -70,8 +68,10 @@ metastoreSite:
 
 # ─── ServiceAccount ──────────────────────────────────────────────────────────
 serviceAccount:
-  # -- Whether to create a ServiceAccount.
-  create: false
+  # -- Whether to create a dedicated ServiceAccount.
+  create: true
+  # -- Whether to auto-mount the service account token. Set to false for security.
+  automountServiceAccountToken: false
   # -- Annotations to add to the ServiceAccount.
   annotations: {}
   # -- Name of the ServiceAccount. Defaults to the fullname if create=true.
@@ -84,6 +84,21 @@ metastore:
 
   # -- Number of Metastore replicas (falls back to global .Values.replicas).
   replicas: null
+
+  # -- Pod-level security context for metastore pods.
+  podSecurityContext: {}
+  # -- Container-level security context for metastore containers.
+  securityContext: {}
+
+  # -- JVM maximum heap size for the metastore process.
+  jvmHeapSize: "2G"
+
+  # -- Termination grace period in seconds.
+  terminationGracePeriodSeconds: 60
+
+  # -- Deployment update strategy.
+  updateStrategy:
+    type: RollingUpdate
 
   # -- Component-specific image overrides.
   image:
@@ -124,14 +139,14 @@ metastore:
   metastoreSite:
     properties: {}
 
-  # -- Resource requests/limits for the Metastore container.
-  resources: {}
-  # requests:
-  #   cpu: "500m"
-  #   memory: "1Gi"
-  # limits:
-  #   cpu: "2"
-  #   memory: "4Gi"
+  # -- Resource requests and limits for metastore pods.
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
 
   # -- Service configuration for the Metastore.
   service:
@@ -169,6 +184,15 @@ metastore:
     #   hosts:
     #     - hive-metastore.example.com
 
+  # -- Affinity rules for metastore pods.
+  affinity: {}
+  # -- Node selector for metastore pods.
+  nodeSelector: {}
+  # -- Tolerations for metastore pods.
+  tolerations: []
+  # -- Topology spread constraints for metastore pods.
+  topologySpreadConstraints: []
+
   # -- Embedded PostgreSQL database via Bitnami postgresql subchart.
   # Set enabled: false to provide an external database via database.external.*.
   database:
@@ -183,6 +207,11 @@ metastore:
       existingSecret: ""
       # -- Key in existingSecret that holds the password.
       existingSecretPasswordKey: "password"
+    # -- JDBC driver configuration for the metastore database.
+    driver:
+      # -- SHA256 checksum of the JDBC driver JAR for integrity verification.
+      # Leave empty to skip verification (not recommended for production).
+      sha256: ""
 
 # ─── Bitnami PostgreSQL subchart ─────────────────────────────────────────────
 # -- Configuration for the embedded Bitnami postgresql subchart.
@@ -198,9 +227,11 @@ postgresql:
     database: metastore
     # -- Username for the Hive Metastore database.
     username: hive
-    # -- Password for the Hive user. Override in production via existingSecret.
+    # -- Password for the Hive user. Leave empty to auto-generate.
+    # In production, use existingSecret instead.
     password: ""
-    # -- Name of an existing secret with keys 'password' and 'postgres-password'.
+    # -- Name of an existing Secret containing the PostgreSQL password.
+    # The secret must contain the key "password".
     existingSecret: ""
   primary:
     persistence:
@@ -213,6 +244,18 @@ hiveserver2:
 
   # -- Number of HiveServer2 replicas (falls back to global .Values.replicas).
   replicas: null
+
+  # -- Pod-level security context for hiveserver2 pods.
+  podSecurityContext: {}
+  # -- Container-level security context for hiveserver2 containers.
+  securityContext: {}
+
+  # -- Termination grace period in seconds.
+  terminationGracePeriodSeconds: 60
+
+  # -- Deployment update strategy.
+  updateStrategy:
+    type: RollingUpdate
 
   # -- Component-specific image overrides.
   image:
@@ -231,6 +274,9 @@ hiveserver2:
   # -- Component-specific envFrom.
   envFrom: []
 
+  # -- Additional init containers for hiveserver2 pods.
+  initContainers: []
+
   # -- Extra volumes to attach to the HiveServer2 pod.
   extraVolumes: []
 
@@ -239,10 +285,18 @@ hiveserver2:
 
   # -- Component-specific hive-site.xml overrides (merged on top of global).
   hiveSite:
-    properties: {}
+    properties:
+      hive.server2.thrift.bind.host: "0.0.0.0"
+      hive.server2.webui.host: "0.0.0.0"
 
-  # -- Resource requests/limits for the HiveServer2 container.
-  resources: {}
+  # -- Resource requests and limits for hiveserver2 pods.
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
 
   # -- Service configuration for HiveServer2.
   service:
@@ -274,3 +328,12 @@ hiveserver2:
     annotations: {}
     hosts: []
     tls: []
+
+  # -- Affinity rules for hiveserver2 pods.
+  affinity: {}
+  # -- Node selector for hiveserver2 pods.
+  nodeSelector: {}
+  # -- Tolerations for hiveserver2 pods.
+  tolerations: []
+  # -- Topology spread constraints for hiveserver2 pods.
+  topologySpreadConstraints: []

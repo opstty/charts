@@ -1,12 +1,12 @@
 Trino has been deployed.
 
-  ✓ Trino Coordinator: {{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}:8080
+  ✓ Trino Coordinator: {{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}:{{ .Values.coordinatorIngress.port | default 8080 }}
 
 To port-forward the Trino coordinator:
 
-  kubectl port-forward svc/{{ include "trino.fullname" . }}-trino 8080:8080 -n {{ .Release.Namespace }}
+  kubectl port-forward svc/{{ include "trino.fullname" . }}-trino {{ .Values.coordinatorIngress.port | default 8080 }}:{{ .Values.coordinatorIngress.port | default 8080 }} -n {{ .Release.Namespace }}
 
-Then access the Trino UI at: http://localhost:8080
+Then access the Trino UI at: http://localhost:{{ .Values.coordinatorIngress.port | default 8080 }}
 {{- if .Values.coordinatorIngress.enabled }}
 
   ✓ Ingress enabled: {{ .Values.coordinatorIngress.host }}

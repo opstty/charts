@@ -6,10 +6,13 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "trino.labels" . | nindent 4 }}
-  {{- with .Values.coordinatorIngress.annotations }}
   annotations:
+    {{- with .Values.commonAnnotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    {{- with .Values.coordinatorIngress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
   {{- with .Values.coordinatorIngress.className }}
   ingressClassName: {{ . | quote }}
@@ -25,4 +28,8 @@ spec:
                   number: {{ .Values.coordinatorIngress.port }}
             path: /
             pathType: ImplementationSpecific
+  {{- if .Values.coordinatorIngress.tls }}
+  tls:
+    {{- toYaml .Values.coordinatorIngress.tls | nindent 4 }}
+  {{- end }}
 {{- end }}

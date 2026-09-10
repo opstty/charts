@@ -1,2 +1,25 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Environment / secrets
+.env
+.envrc
+*.key
+*.pem
+
+# Logs
+*.log
+
+# Tool-specific
 .omo
 .playwright-mcp
+
+# Audit
+AUDIT.md

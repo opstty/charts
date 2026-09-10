@@ -13,12 +13,18 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  backoffLimit: {{ .Values.registerTable.job.backoffLimit | default 3 }}
+  activeDeadlineSeconds: {{ .Values.registerTable.job.activeDeadlineSeconds | default 600 }}
+  ttlSecondsAfterFinished: {{ .Values.registerTable.job.ttlSecondsAfterFinished | default 3600 }}
   template:
     metadata:
       labels:
         {{- include "trino.selectorLabels" . | nindent 8 }}
     spec:
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
       {{- with .Values.registerTable.job.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -27,6 +33,11 @@ spec:
         - name: register-table
           image: "{{ .Values.registerTable.job.image.repository }}:{{ .Values.registerTable.job.image.tag }}"
           imagePullPolicy: {{ .Values.registerTable.job.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: TRINO_HOST
               value: "{{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}"
@@ -34,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.registerTable.job.credentialsSecretName | quote }}
-                  key: password.db
+                  key: {{ .Values.registerTable.job.credentialsSecretKey | default "password.db" }}
             - name: SSL_CERT_PATH
               value: {{ .Values.registerTable.job.sslCertPath | quote }}
             - name: POSTGRES_HOST
@@ -59,6 +70,10 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ . | quote }}
+          {{- end }}
+          {{- with .Values.registerTable.job.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: certificates-volume

@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "hive.selectorLabels" . | nindent 8 }}
+        {{- include "hive.labels" . | nindent 8 }}
         app.kubernetes.io/component: metastore
     spec:
       {{- if (.Values.metastore.imagePullSecrets | default .Values.imagePullSecrets) }}
@@ -28,6 +28,10 @@ spec:
         {{- toYaml (.Values.metastore.imagePullSecrets | default .Values.imagePullSecrets) | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "hive.serviceAccountName" . }}
+      {{- with .Values.metastore.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       volumes:
         - name: hive-site-config
           configMap:
@@ -36,7 +40,8 @@ spec:
           configMap:
             name: {{ include "hive.fullname" . }}-metastore-site
         - name: credential-provider-volume
-          emptyDir: {}
+          emptyDir:
+            medium: Memory
         - name: postgres-jdbc-driver
           emptyDir: {}
         {{- if .Values.metastore.extraVolumes }}
@@ -44,7 +49,11 @@ spec:
         {{- end }}
       initContainers:
         - name: 01-wait-for-db
-          image: postgres:alpine
+          image: postgres:17-alpine
+          {{- with .Values.metastore.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             - name: HMS_DB_PASSWORD
               valueFrom:
@@ -62,6 +71,10 @@ spec:
               echo "PostgreSQL is ready."
         - name: 02-setup-credential-provider
           image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.metastore.image "chart" .Chart) }}
+          {{- with .Values.metastore.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             - name: HMS_DB_PASSWORD
               valueFrom:
@@ -71,14 +84,18 @@ spec:
           volumeMounts:
             - name: credential-provider-volume
               mountPath: /opt/hive/secrets
-          command: ["/bin/sh", "-c"]
-          args:
+          command:
+            - sh
+            - -c
             - |
-              hadoop credential create javax.jdo.option.ConnectionPassword \
-                -value ${HMS_DB_PASSWORD} \
+              echo "${HMS_DB_PASSWORD}" | hadoop credential create javax.jdo.option.ConnectionPassword \
                 -provider jceks://file/opt/hive/secrets/hive.jceks
         - name: 03-download-postgres-driver
           image: alpine/curl:8.12.0
+          {{- with .Values.metastore.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: postgres-jdbc-driver
               mountPath: /driver
@@ -87,9 +104,13 @@ spec:
             - |
               JDBC_VERSION="42.7.5"
               JDBC_URL="https://jdbc.postgresql.org/download/postgresql-${JDBC_VERSION}.jar"
+              DRIVER_PATH="/driver/postgresql.jar"
               echo "Downloading PostgreSQL JDBC driver v${JDBC_VERSION}..."
-              curl -fsSL -o /driver/postgresql.jar "${JDBC_URL}"
-              echo "Driver downloaded to /driver/postgresql.jar"
+              curl -fsSL -o "$DRIVER_PATH" "${JDBC_URL}"
+              {{- if .Values.metastore.database.driver.sha256 }}
+              echo "{{ .Values.metastore.database.driver.sha256 }}  $DRIVER_PATH" | sha256sum -c -
+              {{- end }}
+              echo "Driver downloaded to $DRIVER_PATH"
         {{- if .Values.metastore.initContainers }}
         {{- tpl (toYaml .Values.metastore.initContainers) . | nindent 8 }}
         {{- end }}
@@ -97,6 +118,10 @@ spec:
         - name: metastore
           image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.metastore.image "chart" .Chart) }}
           imagePullPolicy: {{ .Values.metastore.image.pullPolicy | default .Values.image.pullPolicy }}
+          {{- with .Values.metastore.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             - name: SERVICE_NAME
               value: metastore
@@ -115,7 +140,7 @@ spec:
                   key: {{ include "hive.pgSecretPasswordKey" . }}
             - name: SERVICE_OPTS
               value: >-
-                -Xmx2G
+                -Xmx{{ .Values.metastore.jvmHeapSize | default "2G" }}
                 -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
                 -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://{{ include "hive.pgHost" . }}:{{ include "hive.pgPort" . }}/{{ include "hive.pgDatabase" . }}
                 -Djavax.jdo.option.ConnectionUserName={{ include "hive.pgUser" . }}
@@ -127,11 +152,6 @@ spec:
           envFrom:
             {{- toYaml .Values.metastore.envFrom | nindent 12 }}
           {{- end }}
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              export SERVICE_OPTS="$SERVICE_OPTS -Djavax.jdo.option.ConnectionPassword=$HMS_DB_PASSWORD"
-              exec /entrypoint.sh
           ports:
             - name: thrift
               containerPort: {{ .Values.metastore.service.port }}

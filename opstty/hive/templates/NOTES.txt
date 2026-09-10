@@ -14,6 +14,6 @@ Components enabled:
 
 {{- if and .Values.metastore.enabled .Values.metastore.database.enabled }}
 
-  ℹ  Percona Everest DatabaseCluster '{{ .Release.Name }}-hms-db' will be provisioned.
-     Ensure the Percona Everest operator is installed in your cluster.
+  ℹ  PostgreSQL database '{{ .Release.Name }}-postgresql' will be provisioned
+     via the Bitnami PostgreSQL subchart.
 {{- end }}
