@@ -44,7 +44,7 @@ jobs:
 
       - name: Run chart-releaser
         id: release
-        uses: helm/chart-releaser-action@cad2fbb74f3a4e2564a61291580158e83e2e0a41 # v1.7.0
+        uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9f83181ba54714f # v1.7.0
         with:
           charts_dir: opstty
           skip_existing: true
