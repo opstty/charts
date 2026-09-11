@@ -7,6 +7,7 @@ metadata:
   labels:
     {{- include "hive.labels" . | nindent 4 }}
     app.kubernetes.io/component: metastore
+  {{- if or .Values.commonAnnotations .Values.metastore.ingress.annotations }}
   annotations:
     {{- with .Values.commonAnnotations }}
     {{- toYaml . | nindent 4 }}
@@ -14,6 +15,7 @@ metadata:
     {{- with .Values.metastore.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+  {{- end }}
 spec:
   {{- if .Values.metastore.ingress.className }}
   ingressClassName: {{ .Values.metastore.ingress.className }}

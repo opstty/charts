@@ -74,7 +74,7 @@ spec:
                   name: {{ .Values.superset.syncer.job.adminCredentialsSecretName | quote }}
                   key: {{ .Values.superset.syncer.job.adminCredentialsSecretKey | quote }}
             - name: TRINO_HOST
-              value: "{{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}"
+              value: "{{ include "trino.fullname" . }}.{{ .Release.Namespace }}"
           {{- with .Values.superset.syncer.job.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -92,7 +92,7 @@ spec:
             secretName: {{ .Values.superset.syncer.job.credentialsSecretName | quote }}
         - name: access-control-volume
           configMap:
-            name: {{ .Values.superset.syncer.job.accessControlConfigMapName | default (printf "%s-trino-access-control-volume-coordinator" (include "trino.fullname" .)) }}
+            name: {{ .Values.superset.syncer.job.accessControlConfigMapName | default (printf "%s-access-control-volume-coordinator" (include "trino.fullname" .)) }}
         - name: superset-roles-volume
           configMap:
             name: {{ include "trino.fullname" . }}-superset-roles-configmap

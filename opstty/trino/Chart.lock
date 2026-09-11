@@ -4,6 +4,6 @@ dependencies:
   version: 1.42.2
 - name: hive
   repository: https://opstty.github.io/charts/
-  version: 0.1.6
-digest: sha256:49dd7ba62cb0b6e760b7b11c69b72d9d29839f27e43e0c13e1c2cfdfa5fe8f34
-generated: "2026-07-28T15:53:48.792101+02:00"
+  version: 0.1.7
+digest: sha256:08298590107ebac41748d2c5433875b7ee13791eac49325fb58726969955354f
+generated: "2026-09-11T11:40:59.288638+02:00"

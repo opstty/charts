@@ -13,6 +13,10 @@ metadata:
   {{- end }}
 spec:
   replicas: {{ .Values.hiveserver2.replicas | default .Values.replicas }}
+  {{- with .Values.hiveserver2.updateStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "hive.selectorLabels" . | nindent 6 }}
@@ -28,6 +32,9 @@ spec:
         {{- toYaml (.Values.hiveserver2.imagePullSecrets | default .Values.imagePullSecrets) | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "hive.serviceAccountName" . }}
+      {{- with .Values.hiveserver2.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}
       {{- with .Values.hiveserver2.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -45,10 +52,15 @@ spec:
       initContainers:
         - name: 02-setup-credential-provider
           image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.hiveserver2.image "chart" .Chart) }}
-          {{- with .Values.hiveserver2.securityContext }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- if .Values.hiveserver2.securityContext }}
+            {{- toYaml .Values.hiveserver2.securityContext | nindent 12 }}
+            {{- else }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            {{- end }}
           env:
             - name: HMS_DB_PASSWORD
               valueFrom:
@@ -64,14 +76,22 @@ spec:
             - |
               echo "${HMS_DB_PASSWORD}" | hadoop credential create javax.jdo.option.ConnectionPassword \
                 -provider jceks://file/opt/hive/secrets/hive.jceks
+        {{- if .Values.hiveserver2.initContainers }}
+        {{- tpl (toYaml .Values.hiveserver2.initContainers) . | nindent 8 }}
+        {{- end }}
       containers:
         - name: hiveserver2
           image: {{ include "hive.componentImage" (dict "global" .Values.image "component" .Values.hiveserver2.image "chart" .Chart) }}
           imagePullPolicy: {{ .Values.hiveserver2.image.pullPolicy | default .Values.image.pullPolicy }}
-          {{- with .Values.hiveserver2.securityContext }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- if .Values.hiveserver2.securityContext }}
+            {{- toYaml .Values.hiveserver2.securityContext | nindent 12 }}
+            {{- else }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            {{- end }}
           env:
             - name: SERVICE_NAME
               value: hiveserver2
@@ -121,4 +141,20 @@ spec:
               port: thrift
             initialDelaySeconds: {{ .Values.hiveserver2.readinessProbe.initialDelaySeconds | default 10 }}
             periodSeconds: {{ .Values.hiveserver2.readinessProbe.periodSeconds | default 10 }}
+      {{- with .Values.hiveserver2.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hiveserver2.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hiveserver2.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hiveserver2.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 {{- end -}}

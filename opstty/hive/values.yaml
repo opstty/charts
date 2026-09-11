@@ -197,6 +197,12 @@ metastore:
   # Set enabled: false to provide an external database via database.external.*.
   database:
     enabled: true
+    # -- Container image for the wait-for-db init container.
+    waitImage:
+      # -- Image repository for the wait container.
+      repository: "postgres"
+      # -- Image tag for the wait container.
+      tag: "17-alpine"
     # -- External database connection (used when database.enabled=false).
     external:
       host: ""
@@ -209,6 +215,12 @@ metastore:
       existingSecretPasswordKey: "password"
     # -- JDBC driver configuration for the metastore database.
     driver:
+      # -- Container image for the JDBC driver download init container.
+      image:
+        # -- Image repository for the driver download container.
+        repository: "alpine/curl"
+        # -- Image tag for the driver download container.
+        tag: "8.12.0"
       # -- SHA256 checksum of the JDBC driver JAR for integrity verification.
       # Leave empty to skip verification (not recommended for production).
       sha256: ""

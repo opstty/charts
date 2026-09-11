@@ -2,78 +2,584 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
+    "nameOverride": {
+      "type": "string"
+    },
+    "fullnameOverride": {
+      "type": "string"
+    },
+    "commonLabels": {
+      "type": "object"
+    },
+    "commonAnnotations": {
+      "type": "object"
+    },
+    "replicas": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "imagePullSecrets": {
+      "type": "array"
+    },
     "image": {
       "type": "object",
       "properties": {
-        "repository": { "type": "string" },
-        "tag": { "type": "string" },
-        "digest": { "type": "string" }
-      }
-    },
-    "replicas": { "type": ["integer", "null"], "minimum": 0 },
-    "metastore": {
-      "type": "object",
-      "properties": {
-        "enabled": { "type": "boolean" },
-        "replicas": { "type": ["integer", "null"], "minimum": 0 },
-        "database": {
-          "type": "object",
-          "properties": {
-            "enabled": { "type": "boolean" },
-            "external": {
-              "type": "object",
-              "properties": {
-                "host": { "type": "string" },
-                "port": { "type": "integer" },
-                "database": { "type": "string" },
-                "existingSecret": { "type": "string" }
-              }
-            },
-            "driver": {
-              "type": "object",
-              "properties": {
-                "version": { "type": "string" },
-                "sha256": { "type": "string" }
-              }
-            }
-          }
+        "registry": {
+          "type": "string"
         },
-        "resources": { "type": "object" },
-        "podSecurityContext": { "type": "object" },
-        "securityContext": { "type": "object" },
-        "jvmHeapSize": { "type": "string" },
-        "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 }
+        "repository": {
+          "type": "string"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "tag": {
+          "type": "string"
+        },
+        "digest": {
+          "type": "string"
+        },
+        "useRepositoryAsSoleImageReference": {
+          "type": "boolean"
+        }
       }
     },
-    "hiveserver2": {
+    "env": {
+      "type": "array"
+    },
+    "envFrom": {
+      "type": "array"
+    },
+    "hiveSite": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" },
-        "replicas": { "type": ["integer", "null"], "minimum": 0 },
-        "resources": { "type": "object" },
-        "podSecurityContext": { "type": "object" },
-        "securityContext": { "type": "object" },
-        "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 }
+        "properties": {
+          "type": "object"
+        }
+      }
+    },
+    "metastoreSite": {
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object"
+        }
       }
     },
     "serviceAccount": {
       "type": "object",
       "properties": {
-        "create": { "type": "boolean" },
-        "name": { "type": "string" },
-        "automountServiceAccountToken": { "type": "boolean" }
+        "create": {
+          "type": "boolean"
+        },
+        "automountServiceAccountToken": {
+          "type": "boolean"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "metastore": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "replicas": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "podSecurityContext": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "jvmHeapSize": {
+          "type": "string"
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "updateStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "RollingUpdate",
+                "Recreate"
+              ]
+            }
+          }
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "pullPolicy": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "digest": {
+              "type": "string"
+            }
+          }
+        },
+        "imagePullSecrets": {
+          "type": "array"
+        },
+        "initContainers": {
+          "type": "array"
+        },
+        "env": {
+          "type": "array"
+        },
+        "envFrom": {
+          "type": "array"
+        },
+        "extraVolumes": {
+          "type": "array"
+        },
+        "extraVolumeMounts": {
+          "type": "array"
+        },
+        "hiveSite": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object"
+            }
+          }
+        },
+        "metastoreSite": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object"
+            }
+          }
+        },
+        "resources": {
+          "type": "object"
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "annotations": {
+              "type": "object"
+            }
+          }
+        },
+        "startupProbe": {
+          "type": "object",
+          "properties": {
+            "failureThreshold": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "periodSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "livenessProbe": {
+          "type": "object",
+          "properties": {
+            "initialDelaySeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "periodSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "readinessProbe": {
+          "type": "object",
+          "properties": {
+            "initialDelaySeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "periodSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "ingress": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "className": {
+              "type": "string"
+            },
+            "annotations": {
+              "type": "object"
+            },
+            "hosts": {
+              "type": "array"
+            },
+            "tls": {
+              "type": "array"
+            }
+          }
+        },
+        "affinity": {
+          "type": "object"
+        },
+        "nodeSelector": {
+          "type": "object"
+        },
+        "tolerations": {
+          "type": "array"
+        },
+        "topologySpreadConstraints": {
+          "type": "array"
+        },
+        "database": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "external": {
+              "type": "object",
+              "properties": {
+                "host": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "user": {
+                  "type": "string"
+                },
+                "existingSecret": {
+                  "type": "string"
+                },
+                "existingSecretPasswordKey": {
+                  "type": "string"
+                }
+              }
+            },
+            "driver": {
+              "type": "object",
+              "properties": {
+                "sha256": {
+                  "type": "string"
+                },
+                "image": {
+                  "type": "object",
+                  "properties": {
+                    "repository": {
+                      "type": "string"
+                    },
+                    "tag": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "waitImage": {
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hiveserver2": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "replicas": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "podSecurityContext": {
+          "type": "object"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "updateStrategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "RollingUpdate",
+                "Recreate"
+              ]
+            }
+          }
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "pullPolicy": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "digest": {
+              "type": "string"
+            }
+          }
+        },
+        "imagePullSecrets": {
+          "type": "array"
+        },
+        "initContainers": {
+          "type": "array"
+        },
+        "env": {
+          "type": "array"
+        },
+        "envFrom": {
+          "type": "array"
+        },
+        "extraVolumes": {
+          "type": "array"
+        },
+        "extraVolumeMounts": {
+          "type": "array"
+        },
+        "hiveSite": {
+          "type": "object",
+          "properties": {
+            "properties": {
+              "type": "object"
+            }
+          }
+        },
+        "resources": {
+          "type": "object"
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "thriftPort": {
+              "type": "integer"
+            },
+            "httpPort": {
+              "type": "integer"
+            },
+            "webuiPort": {
+              "type": "integer"
+            },
+            "annotations": {
+              "type": "object"
+            }
+          }
+        },
+        "startupProbe": {
+          "type": "object",
+          "properties": {
+            "failureThreshold": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "periodSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "livenessProbe": {
+          "type": "object",
+          "properties": {
+            "initialDelaySeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "periodSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "readinessProbe": {
+          "type": "object",
+          "properties": {
+            "initialDelaySeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "periodSeconds": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          }
+        },
+        "ingress": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "className": {
+              "type": "string"
+            },
+            "annotations": {
+              "type": "object"
+            },
+            "hosts": {
+              "type": "array"
+            },
+            "tls": {
+              "type": "array"
+            }
+          }
+        },
+        "affinity": {
+          "type": "object"
+        },
+        "nodeSelector": {
+          "type": "object"
+        },
+        "tolerations": {
+          "type": "array"
+        },
+        "topologySpreadConstraints": {
+          "type": "array"
+        }
       }
     },
     "postgresql": {
       "type": "object",
       "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          }
+        },
         "auth": {
           "type": "object",
           "properties": {
-            "database": { "type": "string" },
-            "username": { "type": "string" },
-            "password": { "type": "string" },
-            "existingSecret": { "type": "string" }
+            "database": {
+              "type": "string"
+            },
+            "username": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "existingSecret": {
+              "type": "string"
+            }
+          }
+        },
+        "primary": {
+          "type": "object",
+          "properties": {
+            "persistence": {
+              "type": "object",
+              "properties": {
+                "size": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

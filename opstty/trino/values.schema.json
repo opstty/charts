@@ -2,6 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+    "commonLabels": { "type": "object" },
+    "commonAnnotations": { "type": "object" },
     "hive": {
       "type": "object",
       "properties": {
@@ -13,7 +17,8 @@
             "secretName": { "type": "string" },
             "storeRef": { "type": "string" },
             "remoteKey": { "type": "string" },
-            "remoteProperty": { "type": "string" }
+            "remoteProperty": { "type": "string" },
+            "refreshInterval": { "type": "string" }
           }
         }
       }
@@ -21,6 +26,12 @@
     "trino": {
       "type": "object",
       "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "tag": { "type": "string" }
+          }
+        },
         "server": {
           "type": "object",
           "properties": {
@@ -36,9 +47,15 @@
                   }
                 }
               }
-            }
+            },
+            "coordinatorExtraConfig": { "type": "string" }
           }
         },
+        "accessControl": { "type": "object" },
+        "catalogs": { "type": "object" },
+        "additionalConfigProperties": { "type": "array", "items": { "type": "string" } },
+        "envFrom": { "type": "array" },
+        "env": { "type": "array" },
         "passwordAuth": {
           "type": "object",
           "properties": {
@@ -52,6 +69,30 @@
                 "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
               }
             }
+          }
+        },
+        "initContainers": {
+          "type": "object",
+          "properties": {
+            "coordinator": { "type": "array" },
+            "worker": { "type": "array" }
+          }
+        },
+        "coordinator": {
+          "type": "object",
+          "properties": {
+            "startupProbe": { "type": "object" },
+            "additionalVolumes": { "type": "array" },
+            "additionalVolumeMounts": { "type": "array" },
+            "additionalConfigFiles": { "type": "object" }
+          }
+        },
+        "worker": {
+          "type": "object",
+          "properties": {
+            "startupProbe": { "type": "object" },
+            "additionalVolumes": { "type": "array" },
+            "additionalVolumeMounts": { "type": "array" }
           }
         }
       }
@@ -67,19 +108,34 @@
       "properties": {
         "enabled": { "type": "boolean" },
         "host": { "type": "string" },
-        "issuer": { "type": "string" },
-        "secretName": { "type": "string" },
         "duration": { "type": "string" },
-        "renewBefore": { "type": "string" }
+        "renewBefore": { "type": "string" },
+        "issuerRef": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "kind": { "type": "string", "enum": ["Issuer", "ClusterIssuer"] }
+          }
+        },
+        "privateKey": {
+          "type": "object",
+          "properties": {
+            "algorithm": { "type": "string", "enum": ["RSA", "ECDSA", "Ed25519"] },
+            "size": { "type": "integer" },
+            "encoding": { "type": "string", "enum": ["PKCS1", "PKCS8"] }
+          }
+        },
+        "additionalDnsNames": { "type": "array", "items": { "type": "string" } }
       }
     },
     "coordinatorIngress": {
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean" },
+        "className": { "type": "string" },
         "host": { "type": "string" },
         "port": { "type": "integer" },
-        "className": { "type": "string" },
+        "annotations": { "type": "object" },
         "tls": { "type": "array" }
       }
     },
@@ -90,11 +146,6 @@
           "type": "object",
           "properties": {
             "enabled": { "type": "boolean" },
-            "backoffLimit": { "type": "integer", "minimum": 0 },
-            "activeDeadlineSeconds": { "type": "integer", "minimum": 1 },
-            "ttlSecondsAfterFinished": { "type": "integer", "minimum": 0 },
-            "credentialsSecretName": { "type": "string" },
-            "credentialsSecretKey": { "type": "string" },
             "image": {
               "type": "object",
               "properties": {
@@ -103,7 +154,87 @@
                 "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
               }
             },
-            "resources": { "type": "object" }
+            "imagePullSecrets": { "type": "array" },
+            "sslCertPath": { "type": "string" },
+            "credentialsSecretName": { "type": "string" },
+            "credentialsSecretKey": { "type": "string" },
+            "certificateAuthoritySecretName": { "type": "string" },
+            "environmentSecretName": { "type": "string" },
+            "backoffLimit": { "type": "integer", "minimum": 0 },
+            "activeDeadlineSeconds": { "type": "integer", "minimum": 1 },
+            "ttlSecondsAfterFinished": { "type": "integer", "minimum": 0 },
+            "resources": { "type": "object" },
+            "postgres": {
+              "type": "object",
+              "properties": {
+                "host": { "type": "string" },
+                "passwordSecretName": { "type": "string" },
+                "passwordSecretKey": { "type": "string" },
+                "database": { "type": "string" },
+                "caCertPath": { "type": "string" },
+                "caCertSecretName": { "type": "string" }
+              }
+            }
+          }
+        },
+        "configmap": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "data": { "type": "string" }
+          }
+        }
+      }
+    },
+    "superset": {
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "roles": {
+          "type": "object",
+          "properties": {
+            "configmap": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "data": { "type": "string" }
+              }
+            }
+          }
+        },
+        "syncer": {
+          "type": "object",
+          "properties": {
+            "job": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "image": {
+                  "type": "object",
+                  "properties": {
+                    "repository": { "type": "string" },
+                    "tag": { "type": "string" },
+                    "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+                  }
+                },
+                "imagePullSecrets": { "type": "array" },
+                "credentialsSecretName": { "type": "string" },
+                "adminCredentialsSecretName": { "type": "string" },
+                "adminCredentialsSecretKey": { "type": "string" },
+                "accessControlConfigMapName": { "type": "string" },
+                "backoffLimit": { "type": "integer", "minimum": 0 },
+                "activeDeadlineSeconds": { "type": "integer", "minimum": 1 },
+                "ttlSecondsAfterFinished": { "type": "integer", "minimum": 0 },
+                "resources": { "type": "object" },
+                "waitImage": {
+                  "type": "object",
+                  "properties": {
+                    "repository": { "type": "string" },
+                    "tag": { "type": "string" }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -114,8 +245,6 @@
         "create": { "type": "boolean" },
         "name": { "type": "string" }
       }
-    },
-    "commonAnnotations": { "type": "object" },
-    "commonLabels": { "type": "object" }
+    }
   }
 }

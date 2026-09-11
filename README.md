@@ -6,8 +6,8 @@ Helm chart repository for Kubernetes, published to [Artifact Hub](https://artifa
 
 | Chart | Description | Version | App Version |
 |-------|-------------|---------|-------------|
-| [hive](./opstty/hive/) | Apache Hive Metastore + HiveServer2 | 0.1.7 | 4.0.0 |
-| [trino](./opstty/trino/) | Trino query engine with password auth, table registration, and Superset integration | 0.2.10 | 481 |
+| [hive](./opstty/hive/) | Apache Hive Metastore + HiveServer2 | 0.1.8 | 4.0.0 |
+| [trino](./opstty/trino/) | Trino query engine with password auth, table registration, and Superset integration | 0.2.11 | 481 |
 
 ## Usage
 

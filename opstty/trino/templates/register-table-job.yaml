@@ -40,7 +40,7 @@ spec:
                 - ALL
           env:
             - name: TRINO_HOST
-              value: "{{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}"
+              value: "{{ include "trino.fullname" . }}.{{ .Release.Namespace }}"
             - name: TRINO_PASSWORD
               valueFrom:
                 secretKeyRef:

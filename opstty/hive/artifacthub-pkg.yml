@@ -1,4 +1,4 @@
-version: 0.1.7
+version: 0.1.8
 name: hive
 displayName: Apache Hive
 createdAt: "2026-07-21T00:00:00Z"
@@ -28,4 +28,18 @@ keywords:
 annotations:
   artifacthub.io/changes: |
     - kind: fixed
-      description: Add PostgreSQL JDBC driver init container (apache/hive:4.0.0 missing org.postgresql.Driver)
+      description: Fixed conditional annotations on services, ingresses, and service account
+    - kind: added
+      description: Added scheduling support (affinity, nodeSelector, tolerations, topologySpreadConstraints, updateStrategy)
+    - kind: added
+      description: Added automountServiceAccountToken rendering in service account and pod specs
+    - kind: added
+      description: Made init container images configurable via values
+    - kind: added
+      description: Added security context defaults for pods and containers
+    - kind: added
+      description: Added HiveServer2 initContainers extension point
+    - kind: changed
+      description: Comprehensive values.schema.json coverage for all chart parameters
+    - kind: fixed
+      description: Fixed database.external.database renamed to database.external.name matching values.yaml

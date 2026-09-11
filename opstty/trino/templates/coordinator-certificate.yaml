@@ -22,10 +22,10 @@ spec:
   additionalOutputFormats:
     - type: CombinedPEM
   dnsNames:
-    - {{ include "trino.fullname" . }}-trino
-    - {{ include "trino.fullname" . }}-trino.{{ .Release.Namespace }}
-    - {{ include "trino.fullname" . }}-trino-coordinator
-    - {{ include "trino.fullname" . }}-trino-coordinator.{{ .Release.Namespace }}
+    - {{ include "trino.fullname" . }}
+    - {{ include "trino.fullname" . }}.{{ .Release.Namespace }}
+    - {{ include "trino.fullname" . }}-coordinator
+    - {{ include "trino.fullname" . }}-coordinator.{{ .Release.Namespace }}
     {{- with .Values.coordinatorCertificate.host }}
     - {{ . }}
     {{- end }}
