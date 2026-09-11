@@ -1,4 +1,4 @@
-version: 0.2.11
+version: 0.2.12
 name: trino
 displayName: Trino
 createdAt: "2026-07-28T00:00:00Z"
@@ -29,18 +29,4 @@ keywords:
 annotations:
   artifacthub.io/changes: |
     - kind: fixed
-      description: Fixed double -trino suffix in service name references (coordinator ingress, certificate, jobs)
-    - kind: added
-      description: Added scheduling and update strategy support for all job templates
-    - kind: added
-      description: Added automountServiceAccountToken rendering
-    - kind: fixed
-      description: Fixed conditional annotations on all templates
-    - kind: added
-      description: Made init container images configurable via values
-    - kind: added
-      description: Added security context defaults for pods and containers
-    - kind: changed
-      description: Comprehensive values.schema.json coverage including superset section
-    - kind: changed
-      description: Bumped hive subchart dependency to 0.1.8
+      description: Update bundled hive subchart to 0.1.8 (conditional annotations fix)
