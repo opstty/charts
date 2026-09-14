@@ -105,7 +105,8 @@ spec:
             - sh
             - -c
             - |
-              echo "${HMS_DB_PASSWORD}" | hadoop credential create javax.jdo.option.ConnectionPassword \
+              hadoop credential create javax.jdo.option.ConnectionPassword \
+                -value "${HMS_DB_PASSWORD}" \
                 -provider jceks://file/opt/hive/secrets/hive.jceks
         - name: 03-download-postgres-driver
           image: "{{ .Values.metastore.database.driver.image.repository }}:{{ .Values.metastore.database.driver.image.tag }}"
