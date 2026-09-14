@@ -1,9 +1,0 @@
-dependencies:
-- name: trino
-  repository: https://trinodb.github.io/charts/
-  version: 1.42.2
-- name: hive
-  repository: https://opstty.github.io/charts/
-  version: 0.1.9
-digest: sha256:placeholder
-generated: "2026-09-14T12:40:00.000000+02:00"
